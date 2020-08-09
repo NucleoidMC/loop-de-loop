@@ -190,7 +190,7 @@ public final class LoopDeLoopActive {
 
             double x = centre.x + MathHelper.nextDouble(player.getRandom(), -radius, radius);
             double y = centre.y + MathHelper.nextFloat(player.getRandom(), -radius, radius);
-            double z = centre.z +MathHelper.nextFloat(player.getRandom(), -radius, radius);
+            double z = centre.z + 2;
             player.teleport(this.gameWorld.getWorld(), x, y, z, 0.0f, 0.0f);
             player.playSound(SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
