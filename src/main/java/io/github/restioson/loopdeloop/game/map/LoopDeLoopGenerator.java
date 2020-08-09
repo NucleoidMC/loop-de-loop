@@ -40,7 +40,8 @@ public final class LoopDeLoopGenerator {
             // New circle
             double z_scale = ((1.5 * this.config.loops) - i) / ((double) this.config.loops * 1.5);
             int z_move = MathHelper.nextInt(random, (int) Math.ceil((32 * z_scale)), (int) Math.ceil((64 * z_scale)));
-            int y = MathHelper.nextInt(random, 75 - 16, 75 + 16);
+            int y_var = (int) this.config.maxYVariation / 2;
+            int y = MathHelper.nextInt(random, 75 - y_var, 75 + y_var);
             int x_move = MathHelper.nextInt(random, -16, 16);
             circlePos.move(Direction.SOUTH, z_move);
             circlePos.move(Direction.EAST, x_move);
