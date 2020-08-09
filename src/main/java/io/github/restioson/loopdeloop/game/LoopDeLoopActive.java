@@ -170,7 +170,7 @@ public final class LoopDeLoopActive {
                     player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                     giveRocket(player, 1);
                     state.lastHoop += 1;
-                } else if (player.getZ() > hoop.centre.getZ() || player.getZ() < 0 || player.getY() < 0) {
+                } else if (player.getZ() > hoop.centre.getZ() || player.getZ() < -10 || player.getY() < 0) {
                     this.failHoop(player, state);
                 }
             }
