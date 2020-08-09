@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "loopdeloop",
+  "version": "${version}",
+  "name": "Loop-de-loop",
+  "description": "Haha elytra go brrr",
+  "authors": ["Restioson", "gegy1000"],
+  "license": "LGPLv3",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.github.restioson.loopdeloop.LoopDeLoop"]
+  },
+  "depends": {
+    "fabricloader": ">=0.8.9",
+    "fabric": "*",
+    "minecraft": "1.16.x",
+    "plasmid": "0.1.x"
+  }
+}

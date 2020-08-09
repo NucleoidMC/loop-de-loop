@@ -1,0 +1,10 @@
+{
+  "type": "loopdeloop:loopdeloop",
+  "players": {
+    "min": 1,
+    "max": 100
+  },
+  "loops": 90,
+  "time_limit_secs": 240,
+  "start_rockets": 10
+}
