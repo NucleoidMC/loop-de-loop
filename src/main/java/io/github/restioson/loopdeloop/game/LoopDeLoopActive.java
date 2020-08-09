@@ -180,6 +180,7 @@ public final class LoopDeLoopActive {
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state) {
+        giveRocket(player, 1);
         if (state.lastHoop == -1) {
             this.spawnLogic.spawnPlayer(player);
         } else {
@@ -192,7 +193,6 @@ public final class LoopDeLoopActive {
             double z = centre.z +MathHelper.nextFloat(player.getRandom(), -radius, radius);
             player.teleport(this.gameWorld.getWorld(), x, y, z, 0.0f, 0.0f);
             player.playSound(SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1.0F, 1.0F);
-            giveRocket(player, 1);
         }
     }
 
