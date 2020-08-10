@@ -160,7 +160,7 @@ public final class LoopDeLoopActive {
         }
 
         this.timerBar.update(this.finishTime - time, config.timeLimit * 20);
-        this.tickHoops();
+        this.tickHoops(time);
     }
 
     private void tickStartWaiting(long time) {
@@ -201,7 +201,7 @@ public final class LoopDeLoopActive {
         this.broadcastWin();
     }
 
-    private void tickHoops() {
+    private void tickHoops(long time) {
         Iterator<ServerPlayerEntity> iterator = this.participants.iterator();
         while (iterator.hasNext()) {
             ServerPlayerEntity player = iterator.next();
@@ -247,7 +247,7 @@ public final class LoopDeLoopActive {
                 player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 giveRocket(player, 1);
                 state.lastHoop += 1;
-            } else if (outOfBounds) {
+            } else if ((time - state.lastFailTp > 5) && outOfBounds) {
                 this.failHoop(player, state);
             }
 
