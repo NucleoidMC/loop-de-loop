@@ -1,8 +1,8 @@
 package io.github.restioson.loopdeloop.game;
 
-import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
+import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.gegy1000.plasmid.game.GameWorld;
@@ -31,7 +31,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -39,8 +38,7 @@ public final class LoopDeLoopActive {
     private final GameWorld gameWorld;
     private final LoopDeLoopMap map;
     private final LoopDeLoopConfig config;
-    private final Set<ServerPlayerEntity> participants;
-    private final List<String> finished;
+    private final List<LoopDeLoopWinner> finished;
     private final LoopDeLoopSpawnLogic spawnLogic;
     private final LoopDeLoopTimerBar timerBar = new LoopDeLoopTimerBar();
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> player_states;
@@ -56,10 +54,13 @@ public final class LoopDeLoopActive {
         this.gameWorld = gameWorld;
         this.map = map;
         this.config = config;
-        this.participants = new HashSet<>(participants);
         this.finished = new ArrayList<>();
         this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
         this.player_states = new Object2ObjectOpenHashMap<>();
+
+        for (ServerPlayerEntity player : participants) {
+            this.player_states.put(player, new LoopDeLoopPlayer());
+        }
     }
 
     public static void open(GameWorld gameWorld, LoopDeLoopMap map, LoopDeLoopConfig config) {
@@ -99,7 +100,7 @@ public final class LoopDeLoopActive {
 
         this.team = scoreboard.addTeam("loopdeloop");
         this.team.setCollisionRule(AbstractTeam.CollisionRule.NEVER);
-        for (ServerPlayerEntity player : this.participants) {
+        for (ServerPlayerEntity player : this.player_states.keySet()) {
             scoreboard.addPlayerToTeam(player.getEntityName(), this.team);
             this.spawnParticipant(player);
         }
@@ -115,14 +116,14 @@ public final class LoopDeLoopActive {
     }
 
     private void addPlayer(ServerPlayerEntity player) {
-        if (!this.participants.contains(player)) {
+        if (!this.player_states.containsKey(player)) {
             this.spawnSpectator(player);
         }
         this.timerBar.addPlayer(player);
     }
 
     private void removePlayer(ServerPlayerEntity player) {
-        this.participants.remove(player);
+        this.player_states.remove(player);
     }
 
     // thx https://stackoverflow.com/a/6810409/4871468
@@ -154,21 +155,22 @@ public final class LoopDeLoopActive {
             return;
         }
 
-        if (time > this.finishTime || this.participants.isEmpty()) {
+        if (time > this.finishTime || this.player_states.isEmpty()) {
             this.tickEndWaiting(time);
             return;
         }
 
         this.timerBar.update(this.finishTime - time, config.timeLimit * 20);
-        this.tickHoops(time);
+        this.tickPlayers(time);
     }
 
     private void tickStartWaiting(long time) {
         float sec_f = (this.startTime - time) / 20.0f;
 
         if (sec_f > 1) {
-            for (ServerPlayerEntity player : this.participants) {
-                LoopDeLoopPlayer state = this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer());
+            for (Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer> entry : this.player_states.entrySet()) {
+                LoopDeLoopPlayer state = entry.getValue();
+                ServerPlayerEntity player = entry.getKey();
 
                 if (state.lastPos == null) {
                     state.lastPos = player.getPos();
@@ -193,7 +195,7 @@ public final class LoopDeLoopActive {
     }
 
     private void tickEndWaiting(long time) {
-        for (ServerPlayerEntity player : this.participants) {
+        for (ServerPlayerEntity player : this.player_states.keySet()) {
             player.setGameMode(GameMode.SPECTATOR);
         }
 
@@ -201,16 +203,18 @@ public final class LoopDeLoopActive {
         this.broadcastWin();
     }
 
-    private void tickHoops(long time) {
-        Iterator<ServerPlayerEntity> iterator = this.participants.iterator();
+    private void tickPlayers(long time) {
+        Iterator<Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer>> iterator = this.player_states.entrySet().iterator();
         while (iterator.hasNext()) {
-            ServerPlayerEntity player = iterator.next();
-            LoopDeLoopPlayer state = this.player_states.get(player);
+            Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer> entry = iterator.next();
+            LoopDeLoopPlayer state = entry.getValue();
+            ServerPlayerEntity player = entry.getKey();
+
             int nextHoop = state.lastHoop + 1;
 
             if (nextHoop >= this.map.hoops.size()) {
                 iterator.remove();
-                this.finished.add(player.getEntityName());
+                this.finished.add(new LoopDeLoopWinner(player.getEntityName(), time));
                 int idx = this.finished.size();
                 player.sendMessage(new LiteralText("You finished in " + ordinal(idx) + " place!"), true);
                 player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
@@ -287,12 +291,13 @@ public final class LoopDeLoopActive {
             message_builder.append("The game has ended!\n");
 
             for (int i = 0; i < 3 && i < this.finished.size(); i++) {
-                String player = this.finished.get(i);
-                message_builder.append("    ");
-                message_builder.append(ordinal(i + 1));
-                message_builder.append(" place - ");
-                message_builder.append(player);
-                message_builder.append("\n");
+                LoopDeLoopWinner player = this.finished.get(i);
+                message_builder.append(String.format(
+                        "    %s place - %s in %.2fs\n",
+                        ordinal(i + 1),
+                        player.name,
+                        (player.time - this.startTime) / 20.0f
+                ));
             }
 
             String message_string = message_builder.toString();
@@ -306,14 +311,14 @@ public final class LoopDeLoopActive {
     private boolean onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
         if (source == DamageSource.FLY_INTO_WALL) {
             long time = this.gameWorld.getWorld().getTime();
-            this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()), time);
+            this.failHoop(player, this.player_states.get(player), time);
         }
         return true;
     }
 
     private boolean onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
         long time = this.gameWorld.getWorld().getTime();
-        this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()), time);
+        this.failHoop(player, this.player_states.get(player), time);
         return true;
     }
 
