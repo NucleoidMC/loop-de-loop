@@ -269,7 +269,6 @@ public final class LoopDeLoopActive {
             LoopDeLoopHoop lastHoop = this.map.hoops.get(state.lastHoop);
             Vec3d centre = Vec3d.ofCenter(lastHoop.centre);
             float radius = 2;
-
             double x = centre.x + MathHelper.nextDouble(player.getRandom(), -radius, radius);
             double y = centre.y + MathHelper.nextFloat(player.getRandom(), -radius, radius);
             double z = centre.z + 2;

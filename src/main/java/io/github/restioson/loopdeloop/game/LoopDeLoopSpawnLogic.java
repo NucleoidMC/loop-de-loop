@@ -8,6 +8,7 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameMode;
 
 public final class LoopDeLoopSpawnLogic {
@@ -46,6 +47,10 @@ public final class LoopDeLoopSpawnLogic {
             return;
         }
 
-        player.teleport(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);
+        float radius = 4.5f;
+        double x = pos.getX() + MathHelper.nextDouble(player.getRandom(), -radius, radius);
+        double z = pos.getZ() + MathHelper.nextFloat(player.getRandom(), -radius, radius);
+
+        player.teleport(world, x, pos.getY() + 0.5, z, 0.0F, 0.0F);
     }
 }
