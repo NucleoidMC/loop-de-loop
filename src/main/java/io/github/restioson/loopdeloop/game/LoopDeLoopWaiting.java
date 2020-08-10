@@ -1,7 +1,7 @@
 package io.github.restioson.loopdeloop.game;
 
-import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
+import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import net.gegy1000.plasmid.game.GameWorld;
 import net.gegy1000.plasmid.game.GameWorldState;
 import net.gegy1000.plasmid.game.StartResult;

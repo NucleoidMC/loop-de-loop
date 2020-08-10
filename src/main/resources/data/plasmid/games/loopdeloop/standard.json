@@ -5,7 +5,7 @@
     "max": 100
   },
   "loops": 20,
-  "time_limit_secs": 60,
+  "time_limit_secs": 45,
   "start_rockets": 3,
   "max_y_variation": 28
 }

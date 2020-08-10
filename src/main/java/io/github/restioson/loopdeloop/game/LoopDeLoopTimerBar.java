@@ -10,7 +10,7 @@ public final class LoopDeLoopTimerBar implements AutoCloseable {
     private final ServerBossBar bar;
 
     public LoopDeLoopTimerBar() {
-        LiteralText title = new LiteralText("Left");
+        LiteralText title = new LiteralText("Waiting for the game to start...");
 
         this.bar = new ServerBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
         this.bar.setDarkenSky(false);

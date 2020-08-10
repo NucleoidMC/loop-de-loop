@@ -4,11 +4,16 @@
   "version": "${version}",
   "name": "Loop-de-loop",
   "description": "Haha elytra go brrr",
-  "authors": ["Restioson", "gegy1000"],
+  "authors": [
+    "Restioson",
+    "gegy1000"
+  ],
   "license": "LGPLv3",
   "environment": "*",
   "entrypoints": {
-    "main": ["io.github.restioson.loopdeloop.LoopDeLoop"]
+    "main": [
+      "io.github.restioson.loopdeloop.LoopDeLoop"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.8.9",

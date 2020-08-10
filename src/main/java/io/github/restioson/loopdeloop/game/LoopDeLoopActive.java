@@ -1,5 +1,6 @@
 package io.github.restioson.loopdeloop.game;
 
+import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -14,7 +15,9 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.scoreboard.AbstractTeam;
+import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -24,6 +27,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -40,10 +44,13 @@ public final class LoopDeLoopActive {
     private final LoopDeLoopSpawnLogic spawnLogic;
     private final LoopDeLoopTimerBar timerBar = new LoopDeLoopTimerBar();
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> player_states;
-    @Nullable private ServerPlayerEntity lastCompleter;
-    @Nullable Team team;
+    @Nullable
+    private ServerPlayerEntity lastCompleter;
+    @Nullable
+    Team team;
     private long closeTime = -1;
     private long finishTime = -1;
+    private long startTime = -1;
 
     private LoopDeLoopActive(GameWorld gameWorld, LoopDeLoopMap map, LoopDeLoopConfig config, Set<ServerPlayerEntity> participants) {
         this.gameWorld = gameWorld;
@@ -83,14 +90,23 @@ public final class LoopDeLoopActive {
 
     private void onOpen() {
         ServerWorld world = this.gameWorld.getWorld();
-        this.team = world.getScoreboard().addTeam("loopdeloop");
+        ServerScoreboard scoreboard = world.getScoreboard();
+
+        Team oldTeam = scoreboard.getTeam("loopdeloop");
+        if (oldTeam != null) {
+            scoreboard.removeTeam(oldTeam);
+        }
+
+        this.team = scoreboard.addTeam("loopdeloop");
         this.team.setCollisionRule(AbstractTeam.CollisionRule.NEVER);
         for (ServerPlayerEntity player : this.participants) {
-            world.getScoreboard().addPlayerToTeam(player.getEntityName(), this.team);
+            scoreboard.addPlayerToTeam(player.getEntityName(), this.team);
             this.spawnParticipant(player);
         }
 
-        this.finishTime = world.getTime() + (this.config.timeLimit * 20);
+        long time = world.getTime();
+        this.startTime = time - (time % 20) + (4 * 20) + 19;
+        this.finishTime = this.startTime + (this.config.timeLimit * 20);
     }
 
     private void onClose() {
@@ -111,7 +127,7 @@ public final class LoopDeLoopActive {
 
     // thx https://stackoverflow.com/a/6810409/4871468
     private static String ordinal(int i) {
-        String[] suffixes = new String[] { "th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th" };
+        String[] suffixes = new String[]{"th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"};
         switch (i % 100) {
             case 11:
             case 12:
@@ -133,22 +149,63 @@ public final class LoopDeLoopActive {
             return;
         }
 
-        if (time > this.finishTime || this.participants.isEmpty()) {
-            for (ServerPlayerEntity player : this.participants) {
-                player.setGameMode(GameMode.SPECTATOR);
-            }
+        if (this.startTime > time) {
+            this.tickStartWaiting(time);
+            return;
+        }
 
-            this.closeTime = time + (5 * 20);
-            this.broadcastWin();
+        if (time > this.finishTime || this.participants.isEmpty()) {
+            this.tickEndWaiting(time);
             return;
         }
 
         this.timerBar.update(this.finishTime - time, config.timeLimit * 20);
+        this.tickHoops();
+    }
 
+    private void tickStartWaiting(long time) {
+        float sec_f = (this.startTime - time) / 20.0f;
+
+        if (sec_f > 1) {
+            for (ServerPlayerEntity player : this.participants) {
+                LoopDeLoopPlayer state = this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer());
+
+                if (state.lastPos == null) {
+                    state.lastPos = player.getPos();
+                    continue;
+                }
+
+                player.teleport(state.lastPos.x, state.lastPos.y, state.lastPos.z);
+            }
+        }
+
+        int sec = (int) Math.floor(sec_f) - 1;
+
+        if ((this.startTime - time) % 20 == 0) {
+            if (sec > 0) {
+                this.broadcastTitle(new LiteralText(Integer.toString(sec)).formatted(Formatting.BOLD));
+                this.broadcastSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, 1.0F);
+            } else {
+                this.broadcastTitle(new LiteralText("Go!").formatted(Formatting.BOLD));
+                this.broadcastSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, 2.0F);
+            }
+        }
+    }
+
+    private void tickEndWaiting(long time) {
+        for (ServerPlayerEntity player : this.participants) {
+            player.setGameMode(GameMode.SPECTATOR);
+        }
+
+        this.closeTime = time + (5 * 20);
+        this.broadcastWin();
+    }
+
+    private void tickHoops() {
         Iterator<ServerPlayerEntity> iterator = this.participants.iterator();
         while (iterator.hasNext()) {
             ServerPlayerEntity player = iterator.next();
-            LoopDeLoopPlayer state = this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer());
+            LoopDeLoopPlayer state = this.player_states.get(player);
             int nextHoop = state.lastHoop + 1;
 
             if (nextHoop >= this.map.hoops.size()) {
@@ -163,16 +220,35 @@ public final class LoopDeLoopActive {
             }
 
             LoopDeLoopHoop hoop = this.map.hoops.get(nextHoop);
-            if (state.lastPos != null) {
-                Vec3d end = player.getPos();
 
-                if (hoop.intersectsSegment(state.lastPos, end)) {
-                    player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
-                    giveRocket(player, 1);
-                    state.lastHoop += 1;
-                } else if (player.getZ() > hoop.centre.getZ() || player.getZ() < -10 || player.getY() < 0) {
-                    this.failHoop(player, state);
-                }
+            int lastHoopZ;
+            int lastHoopX;
+            if (state.lastHoop == -1) {
+                lastHoopZ = -5;
+                lastHoopX = 0;
+            } else {
+                BlockPos last = this.map.hoops.get(state.lastHoop).centre;
+                lastHoopZ = last.getZ();
+                lastHoopX = last.getX();
+            }
+
+            Vec3d end = player.getPos();
+
+            double yMax = ((double) this.config.maxYVariation / 2) + 30;
+            boolean outOfBounds = player.getZ() > hoop.centre.getZ() ||
+                    player.getZ() < lastHoopZ - 10 ||
+                    player.getY() < 75 - yMax ||
+                    player.getY() > 75 + yMax ||
+                    player.getY() < 0 ||
+                    player.getX() > Math.max(hoop.centre.getX(), lastHoopX) + 30 ||
+                    player.getX() < Math.min(hoop.centre.getX(), lastHoopX) - 30;
+
+            if (hoop.intersectsSegment(state.lastPos, end)) {
+                player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                giveRocket(player, 1);
+                state.lastHoop += 1;
+            } else if (outOfBounds) {
+                this.failHoop(player, state);
             }
 
             state.lastPos = player.getPos();
@@ -263,12 +339,23 @@ public final class LoopDeLoopActive {
         }
     }
 
-    private void broadcastSound(SoundEvent sound) {
+    private void broadcastTitle(Text message) {
+        for (ServerPlayerEntity player : this.gameWorld.getPlayers()) {
+            TitleS2CPacket packet = new TitleS2CPacket(TitleS2CPacket.Action.TITLE, message, 1, 5,  3);
+            player.networkHandler.sendPacket(packet);
+        }
+    }
+
+    private void broadcastSound(SoundEvent sound, float pitch) {
         for (ServerPlayerEntity player : this.gameWorld.getPlayers()) {
             if (player.equals(this.lastCompleter)) {
                 continue;
             }
-            player.playSound(sound, SoundCategory.PLAYERS, 1.0F, 1.0F);
+            player.playSound(sound, SoundCategory.PLAYERS, 1.0F, pitch);
         }
+    }
+
+    private void broadcastSound(SoundEvent sound) {
+        this.broadcastSound(sound, 1.0F);
     }
 }

@@ -8,7 +8,6 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import org.lwjgl.system.MathUtil;
 
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -38,13 +37,13 @@ public final class LoopDeLoopGenerator {
             this.addCircle(template, 5, circlePos.toImmutable(), map);
 
             // New circle
-            double z_scale = ((1.5 * this.config.loops) - i) / ((double) this.config.loops * 1.5);
-            int z_move = MathHelper.nextInt(random, (int) Math.ceil((32 * z_scale)), (int) Math.ceil((64 * z_scale)));
-            int y_var = (int) this.config.maxYVariation / 2;
-            int y = MathHelper.nextInt(random, 75 - y_var, 75 + y_var);
-            int x_move = MathHelper.nextInt(random, -16, 16);
-            circlePos.move(Direction.SOUTH, z_move);
-            circlePos.move(Direction.EAST, x_move);
+            double zScale = ((1.5 * this.config.loops) - i) / ((double) this.config.loops * 1.5);
+            int zMove = MathHelper.nextInt(random, (int) Math.ceil((32 * zScale)), (int) Math.ceil((64 * zScale)));
+            int yVar = this.config.maxYVariation / 2;
+            int y = MathHelper.nextInt(random, 75 - yVar, 75 + yVar);
+            int xMove = MathHelper.nextInt(random, -16, 16);
+            circlePos.move(Direction.SOUTH, zMove);
+            circlePos.move(Direction.EAST, xMove);
             circlePos.setY(y);
         }
 

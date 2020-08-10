@@ -6,6 +6,6 @@
   },
   "loops": 100,
   "time_limit_secs": 240,
-  "start_rockets": 10,
-  "max_y_variation": 28
+  "start_rockets": 30,
+  "max_y_variation": 60
 }
