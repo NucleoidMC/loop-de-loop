@@ -21,7 +21,7 @@ public class LoopDeLoopHoop {
             return false; // No intersection - line parallel
         }
 
-        return intersection.isInRange(Vec3d.ofCenter(this.centre), this.radius);
+        return intersection.isInRange(Vec3d.ofCenter(this.centre), this.radius - 1);
     }
 
     @Nullable
