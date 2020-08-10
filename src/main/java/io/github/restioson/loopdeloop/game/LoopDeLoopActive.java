@@ -248,16 +248,21 @@ public final class LoopDeLoopActive {
                 giveRocket(player, 1);
                 state.lastHoop += 1;
             } else if ((time - state.lastFailTp > 5) && outOfBounds) {
-                state.lastFailTp = time;
-                this.failHoop(player, state);
+                this.failHoop(player, state, time);
             }
 
             state.lastPos = player.getPos();
         }
     }
 
-    private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state) {
+    private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
+        if (time - state.lastFailTp < 5) {
+            return;
+        }
+
+        state.lastFailTp = time;
         giveRocket(player, 1);
+
         if (state.lastHoop == -1) {
             this.spawnLogic.spawnPlayer(player);
         } else {
@@ -301,13 +306,15 @@ public final class LoopDeLoopActive {
 
     private boolean onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
         if (source == DamageSource.FLY_INTO_WALL) {
-            this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()));
+            long time = this.gameWorld.getWorld().getTime();
+            this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()), time);
         }
         return true;
     }
 
     private boolean onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-        this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()));
+        long time = this.gameWorld.getWorld().getTime();
+        this.failHoop(player, this.player_states.computeIfAbsent(player, p -> new LoopDeLoopPlayer()), time);
         return true;
     }
 
