@@ -248,6 +248,7 @@ public final class LoopDeLoopActive {
                 giveRocket(player, 1);
                 state.lastHoop += 1;
             } else if ((time - state.lastFailTp > 5) && outOfBounds) {
+                state.lastFailTp = time;
                 this.failHoop(player, state);
             }
 
