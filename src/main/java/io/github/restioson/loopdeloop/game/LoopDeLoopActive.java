@@ -260,7 +260,7 @@ public final class LoopDeLoopActive {
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
-        if (time - state.lastFailTp < 5) {
+        if (time - state.lastFailTp < 20) {
             return;
         }
 
