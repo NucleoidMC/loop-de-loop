@@ -2,19 +2,20 @@ package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
-import net.gegy1000.plasmid.game.GameWorld;
-import net.gegy1000.plasmid.game.GameWorldState;
-import net.gegy1000.plasmid.game.StartResult;
-import net.gegy1000.plasmid.game.event.OfferPlayerListener;
-import net.gegy1000.plasmid.game.event.PlayerAddListener;
-import net.gegy1000.plasmid.game.event.PlayerDeathListener;
-import net.gegy1000.plasmid.game.event.RequestStartListener;
-import net.gegy1000.plasmid.game.player.JoinResult;
-import net.gegy1000.plasmid.game.rule.GameRule;
-import net.gegy1000.plasmid.game.rule.RuleResult;
+import net.minecraft.server.MinecraftServer;
+import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.StartResult;
+import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
+import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
+import xyz.nucleoid.plasmid.game.event.RequestStartListener;
+import xyz.nucleoid.plasmid.game.player.JoinResult;
+import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.game.world.bubble.BubbleWorldConfig;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -33,11 +34,16 @@ public final class LoopDeLoopWaiting {
         this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
     }
 
-    public static CompletableFuture<Void> open(GameWorldState worldState, LoopDeLoopConfig config) {
+    public static CompletableFuture<Void> open(MinecraftServer server, LoopDeLoopConfig config) {
+
         LoopDeLoopGenerator generator = new LoopDeLoopGenerator(config);
 
         return generator.create().thenAccept(map -> {
-            GameWorld gameWorld = worldState.openWorld(map.asGenerator());
+            BubbleWorldConfig worldConfig = new BubbleWorldConfig()
+                    .setGenerator(map.asGenerator())
+                    .setDefaultGameMode(GameMode.SPECTATOR);
+
+            GameWorld gameWorld = GameWorld.open(server, worldConfig);
 
             LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(gameWorld, map, config);
 

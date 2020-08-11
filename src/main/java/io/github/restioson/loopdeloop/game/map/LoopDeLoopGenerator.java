@@ -1,7 +1,7 @@
 package io.github.restioson.loopdeloop.game.map;
 
 import io.github.restioson.loopdeloop.game.LoopDeLoopConfig;
-import net.gegy1000.plasmid.game.map.template.MapTemplate;
+import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.Util;

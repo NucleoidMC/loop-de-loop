@@ -2,7 +2,7 @@ package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
-import net.gegy1000.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.GameWorld;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;

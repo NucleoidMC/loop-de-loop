@@ -5,12 +5,12 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.gegy1000.plasmid.game.GameWorld;
-import net.gegy1000.plasmid.game.event.*;
-import net.gegy1000.plasmid.game.player.JoinResult;
-import net.gegy1000.plasmid.game.rule.GameRule;
-import net.gegy1000.plasmid.game.rule.RuleResult;
-import net.gegy1000.plasmid.util.ItemStackBuilder;
+import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.event.*;
+import xyz.nucleoid.plasmid.game.player.JoinResult;
+import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.item.ItemStack;
@@ -145,7 +145,7 @@ public final class LoopDeLoopActive {
 
         if (this.closeTime > 0) {
             if (time >= this.closeTime) {
-                gameWorld.closeWorld();
+                this.gameWorld.closeWorld();
             }
             return;
         }
