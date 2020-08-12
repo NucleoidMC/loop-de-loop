@@ -15,13 +15,21 @@ public class LoopDeLoopHoop {
     }
 
     public boolean intersectsSegment(Vec3d begin, Vec3d end) {
-        Vec3d intersection = lineIntersectsPlane(begin, end, centre.getZ());
+        Vec3d intersection = lineIntersectsPlane(begin, end, centre.getZ() + 0.5);
 
         if (intersection == null) {
             return false; // No intersection - line parallel
         }
 
-        return intersection.isInRange(Vec3d.ofCenter(this.centre), this.radius - 1);
+        // radius - 1 is to avoid allowing people to go on top of corners
+        return this.contains(new BlockPos(intersection));
+    }
+
+    public boolean contains(BlockPos pos) {
+        int adjRadius = this.radius - 1; // radius - 1 is to avoid allowing people to go on top of corners
+        int dx = pos.getX() - this.centre.getX();
+        int dy = pos.getY() - this.centre.getY();
+        return pos.getZ() == this.centre.getZ() && (dx * dx + dy * dy <= adjRadius * adjRadius);
     }
 
     @Nullable

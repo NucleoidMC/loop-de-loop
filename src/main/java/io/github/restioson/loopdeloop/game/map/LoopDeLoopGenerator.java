@@ -20,7 +20,7 @@ public final class LoopDeLoopGenerator {
     }
 
     public CompletableFuture<LoopDeLoopMap> create() {
-        return CompletableFuture.supplyAsync(this::build, Util.getServerWorkerExecutor());
+        return CompletableFuture.supplyAsync(this::build, Util.getMainWorkerExecutor());
     }
 
     private LoopDeLoopMap build() {

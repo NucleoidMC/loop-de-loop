@@ -5,6 +5,10 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.World;
 import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.event.*;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
@@ -67,13 +71,14 @@ public final class LoopDeLoopActive {
         Set<ServerPlayerEntity> participants = gameWorld.getPlayers();
         LoopDeLoopActive active = new LoopDeLoopActive(gameWorld, map, config, participants);
 
-        gameWorld.newGame(game -> {
-            game.setRule(GameRule.ALLOW_CRAFTING, RuleResult.DENY);
-            game.setRule(GameRule.ALLOW_PORTALS, RuleResult.DENY);
-            game.setRule(GameRule.ALLOW_PVP, RuleResult.DENY);
+        gameWorld.openGame(game -> {
+            game.setRule(GameRule.CRAFTING, RuleResult.DENY);
+            game.setRule(GameRule.PORTALS, RuleResult.DENY);
+            game.setRule(GameRule.PVP, RuleResult.DENY);
             game.setRule(GameRule.BLOCK_DROPS, RuleResult.DENY);
             game.setRule(GameRule.FALL_DAMAGE, RuleResult.DENY);
-            game.setRule(GameRule.ENABLE_HUNGER, RuleResult.DENY);
+            game.setRule(GameRule.HUNGER, RuleResult.DENY);
+            game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
 
             game.on(GameOpenListener.EVENT, active::onOpen);
             game.on(GameCloseListener.EVENT, active::onClose);
@@ -145,7 +150,7 @@ public final class LoopDeLoopActive {
 
         if (this.closeTime > 0) {
             if (time >= this.closeTime) {
-                this.gameWorld.closeWorld();
+                this.gameWorld.close();
             }
             return;
         }
@@ -236,18 +241,25 @@ public final class LoopDeLoopActive {
                 lastHoopX = last.getX();
             }
 
-            Vec3d end = player.getPos();
+            BlockPos centre = hoop.centre;
 
             double yMax = ((double) this.config.maxYVariation / 2) + 30;
-            boolean outOfBounds = player.getZ() > hoop.centre.getZ() ||
+            boolean outOfBounds = Math.floor(player.getZ()) > centre.getZ() ||
                     player.getZ() < lastHoopZ - 10 ||
                     player.getY() < 75 - yMax ||
                     player.getY() > 75 + yMax ||
                     player.getY() < 0 ||
-                    player.getX() > Math.max(hoop.centre.getX(), lastHoopX) + 30 ||
-                    player.getX() < Math.min(hoop.centre.getX(), lastHoopX) - 30;
+                    player.getX() > Math.max(centre.getX(), lastHoopX) + 30 ||
+                    player.getX() < Math.min(centre.getX(), lastHoopX) - 30;
 
-            if (hoop.intersectsSegment(state.lastPos, end)) {
+            // The two parts of the `or` here represent the two paths: the player is moving fast, or they are moving slow
+            //
+            // If they are moving fast, the line segment connecting their past and present movement will intersect the
+            // hoop's circle and the first part will be true.
+            //
+            // If they are moving slow, there may not be enough precision to detect this, so the slow path is fallen back
+            // to, simply checking if the end coordinate is inside of the hoop.
+            if (hoop.intersectsSegment(state.lastPos, player.getPos()) || hoop.contains(player.getBlockPos())) {
                 player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 giveRocket(player, 1);
                 state.lastHoop += 1;
@@ -260,12 +272,20 @@ public final class LoopDeLoopActive {
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
-        if (time - state.lastFailTp < 20) {
+        if (time - state.lastFailTp < 5) {
             return;
         }
 
         state.lastFailTp = time;
         giveRocket(player, 1);
+
+        ServerWorld world = this.gameWorld.getWorld();
+        List<FireworkRocketEntity> rockets = world.getEntitiesByType(
+                EntityType.FIREWORK_ROCKET,
+                player.getBoundingBox(),
+                firework -> firework.getOwner() == player
+        );
+        rockets.forEach(Entity::remove);
 
         if (state.lastHoop == -1) {
             this.spawnLogic.spawnPlayer(player);
@@ -277,8 +297,9 @@ public final class LoopDeLoopActive {
             double y = centre.y + MathHelper.nextFloat(player.getRandom(), -radius, radius);
             double z = centre.z + 2;
             player.teleport(this.gameWorld.getWorld(), x, y, z, 0.0f, 0.0f);
-            player.playSound(SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
+
+        player.playSound(SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
 
     private void broadcastWin() {
@@ -309,10 +330,8 @@ public final class LoopDeLoopActive {
     }
 
     private boolean onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-        if (source == DamageSource.FLY_INTO_WALL) {
-            long time = this.gameWorld.getWorld().getTime();
-            this.failHoop(player, this.player_states.get(player), time);
-        }
+        long time = this.gameWorld.getWorld().getTime();
+        this.failHoop(player, this.player_states.get(player), time);
         return true;
     }
 

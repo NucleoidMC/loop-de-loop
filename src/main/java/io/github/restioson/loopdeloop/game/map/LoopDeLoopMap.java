@@ -1,5 +1,6 @@
 package io.github.restioson.loopdeloop.game.map;
 
+import net.minecraft.server.MinecraftServer;
 import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.game.map.template.TemplateChunkGenerator;
 import net.minecraft.util.math.BlockPos;
@@ -31,7 +32,7 @@ public final class LoopDeLoopMap {
         return this.spawn;
     }
 
-    public ChunkGenerator asGenerator() {
-        return new TemplateChunkGenerator(this.template, BlockPos.ORIGIN);
+    public ChunkGenerator asGenerator(MinecraftServer server) {
+        return new TemplateChunkGenerator(server, this.template, BlockPos.ORIGIN);
     }
 }
