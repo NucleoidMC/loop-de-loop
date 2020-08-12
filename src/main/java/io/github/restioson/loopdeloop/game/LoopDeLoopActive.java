@@ -56,6 +56,7 @@ public final class LoopDeLoopActive {
     private final List<LoopDeLoopWinner> finished;
     private final LoopDeLoopSpawnLogic spawnLogic;
     private final LoopDeLoopTimerBar timerBar = new LoopDeLoopTimerBar();
+    // Only stores flying players, i.e non-completed players
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> player_states;
     @Nullable
     private ServerPlayerEntity lastCompleter;
@@ -231,12 +232,17 @@ public final class LoopDeLoopActive {
             if (nextHoop >= this.map.hoops.size()) {
                 iterator.remove();
                 this.finished.add(new LoopDeLoopWinner(player.getEntityName(), time));
+                this.player_states.remove(player);
                 int idx = this.finished.size();
                 player.sendMessage(new LiteralText("You finished in " + ordinal(idx) + " place!"), true);
                 player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 player.setGameMode(GameMode.SPECTATOR);
                 this.lastCompleter = player;
                 continue;
+            }
+
+            if (state.lastHoop != -1 && player.isOnGround()) {
+                this.failHoop(player, state, time);
             }
 
             LoopDeLoopHoop hoop = this.map.hoops.get(nextHoop);
@@ -263,19 +269,12 @@ public final class LoopDeLoopActive {
                     player.getX() > Math.max(centre.getX(), lastHoopX) + 30 ||
                     player.getX() < Math.min(centre.getX(), lastHoopX) - 30;
 
-            // The two parts of the `or` here represent the two paths: the player is moving fast, or they are moving slow
-            //
-            // If they are moving fast, the line segment connecting their past and present movement will intersect the
-            // hoop's circle and the first part will be true.
-            //
-            // If they are moving slow, there may not be enough precision to detect this, so the slow path is fallen back
-            // to, simply checking if the end coordinate is inside of the hoop.
             if (hoop.intersectsSegment(state.lastPos, player.getPos())) {
                 player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 giveRocket(player, 1);
                 state.lastHoop += 1;
-            } else if ((time - state.lastFailTp > 5) && outOfBounds) {
-                this.failHoop(player, state, time);
+            } else if (outOfBounds) {
+               this.failHoop(player, state, time);
             }
 
             state.lastPos = player.getPos();
@@ -283,7 +282,7 @@ public final class LoopDeLoopActive {
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
-        if (time - state.lastFailTp < 5) {
+        if (time - state.lastFailTp < 20) {
             return;
         }
 

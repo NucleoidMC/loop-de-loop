@@ -16,19 +16,19 @@ public class LoopDeLoopHoop {
     }
 
     public boolean intersectsSegment(Vec3d begin, Vec3d end) {
-        // if we contain the end position, we are inside the hoop
+        // If the hoop contains the end position, it intersects
         if (this.contains(end)) {
             return true;
         }
 
-        // find the intersection between the line and the hoop plane
+        // Find the intersection between the line and the hoop plane
         Vec3d intersection = lineIntersectsPlane(begin, end, centre.getZ() + 0.5);
         if (intersection == null) {
             // no intersection
             return false;
         }
 
-        // check if the intersection point is contained within the loop
+        // Check if the intersection point is contained within the loop
         return this.contains(intersection.x, intersection.y);
     }
 
