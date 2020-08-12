@@ -7,16 +7,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.world.World;
-import xyz.nucleoid.plasmid.game.GameWorld;
-import xyz.nucleoid.plasmid.game.event.*;
-import xyz.nucleoid.plasmid.game.player.JoinResult;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
-import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
@@ -35,8 +28,26 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.event.GameCloseListener;
+import xyz.nucleoid.plasmid.game.event.GameOpenListener;
+import xyz.nucleoid.plasmid.game.event.GameTickListener;
+import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
+import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
+import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
+import xyz.nucleoid.plasmid.game.player.JoinResult;
+import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.ItemStackBuilder;
+
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class LoopDeLoopActive {
     private final GameWorld gameWorld;
@@ -259,7 +270,7 @@ public final class LoopDeLoopActive {
             //
             // If they are moving slow, there may not be enough precision to detect this, so the slow path is fallen back
             // to, simply checking if the end coordinate is inside of the hoop.
-            if (hoop.intersectsSegment(state.lastPos, player.getPos()) || hoop.contains(player.getBlockPos())) {
+            if (hoop.intersectsSegment(state.lastPos, player.getPos())) {
                 player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 giveRocket(player, 1);
                 state.lastHoop += 1;

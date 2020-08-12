@@ -1,6 +1,7 @@
 package io.github.restioson.loopdeloop.game.map;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import javax.annotation.Nullable;
@@ -15,25 +16,36 @@ public class LoopDeLoopHoop {
     }
 
     public boolean intersectsSegment(Vec3d begin, Vec3d end) {
-        Vec3d intersection = lineIntersectsPlane(begin, end, centre.getZ() + 0.5);
-
-        if (intersection == null) {
-            return false; // No intersection - line parallel
+        // if we contain the end position, we are inside the hoop
+        if (this.contains(end)) {
+            return true;
         }
 
-        // radius - 1 is to avoid allowing people to go on top of corners
-        return this.contains(new BlockPos(intersection));
+        // find the intersection between the line and the hoop plane
+        Vec3d intersection = lineIntersectsPlane(begin, end, centre.getZ() + 0.5);
+        if (intersection == null) {
+            // no intersection
+            return false;
+        }
+
+        // check if the intersection point is contained within the loop
+        return this.contains(intersection.x, intersection.y);
     }
 
-    public boolean contains(BlockPos pos) {
+    public boolean contains(Vec3d pos) {
+        return MathHelper.floor(pos.getZ()) == this.centre.getZ()
+                && this.contains(pos.getX(), pos.getY());
+    }
+
+    private boolean contains(double x, double y) {
         int adjRadius = this.radius - 1; // radius - 1 is to avoid allowing people to go on top of corners
-        int dx = pos.getX() - this.centre.getX();
-        int dy = pos.getY() - this.centre.getY();
-        return pos.getZ() == this.centre.getZ() && (dx * dx + dy * dy <= adjRadius * adjRadius);
+        int dx = MathHelper.floor(x) - this.centre.getX();
+        int dy = MathHelper.floor(y) - this.centre.getY();
+        return dx * dx + dy * dy <= adjRadius * adjRadius;
     }
 
     @Nullable
-    public static Vec3d lineIntersectsPlane(Vec3d origin, Vec3d target, double planeZ) {
+    private static Vec3d lineIntersectsPlane(Vec3d origin, Vec3d target, double planeZ) {
         Vec3d ray = target.subtract(origin);
         if (Math.abs(ray.z) <= 1e-5) {
             return null;
