@@ -43,8 +43,6 @@ public final class LoopDeLoopConfig {
         this.yVarMax = yVarMax;
         this.zVarMax = zVarMax;
         this.zVarMin = zVarMin;
-
-        System.out.println(String.format("HERE loops: %s; radius: %s", loops, loopRadius));
     }
 
     public static class ZVariation {

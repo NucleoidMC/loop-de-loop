@@ -61,7 +61,6 @@ public class LoopDeLoopScoreboard {
     }
 
     private void renderObjective(ScoreboardObjective objective, List<String> lines) {
-        System.out.println(lines);
         this.clear(objective);
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
