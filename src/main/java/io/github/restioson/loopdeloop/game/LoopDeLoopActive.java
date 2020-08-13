@@ -284,7 +284,7 @@ public final class LoopDeLoopActive {
                     this.topPlayers.add(new Pair<>(player, state));
                 }
 
-                this.topPlayers.sort(Comparator.comparing(i -> i.getRight().lastHoop));
+                this.topPlayers.sort(Comparator.comparing(i -> this.config.loops - i.getRight().lastHoop));
 
                 if (this.topPlayers.size() > 5) {
                     this.topPlayers.remove(5);
