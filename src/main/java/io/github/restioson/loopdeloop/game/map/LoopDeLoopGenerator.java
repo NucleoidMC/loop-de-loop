@@ -1,13 +1,13 @@
 package io.github.restioson.loopdeloop.game.map;
 
 import io.github.restioson.loopdeloop.game.LoopDeLoopConfig;
-import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
 
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -26,35 +26,41 @@ public final class LoopDeLoopGenerator {
     private LoopDeLoopMap build() {
         MapTemplate template = MapTemplate.createEmpty();
         LoopDeLoopMap map = new LoopDeLoopMap(template);
+        LoopDeLoopConfig cfg = this.config;
 
-        this.spawnPlatform(template, map);
+        this.spawnPlatform(template);
 
         BlockPos.Mutable circlePos = new BlockPos.Mutable();
-        circlePos.set(0, 75, 20);
+        circlePos.set(0, 128, 20);
         Random random = new Random();
 
-        for (int i = 0; i < this.config.loops; i++) {
-            this.addCircle(template, 5, circlePos.toImmutable(), map);
+        // y = mx + c  -- these are gradient values
+        double mZVarMax = (cfg.zVarMax.end - cfg.zVarMax.start) / (double) cfg.loops;
+        double mZVarMin = (cfg.zVarMin.end - cfg.zVarMin.start) / (double) cfg.loops;
+
+        for (int i = 0; i < cfg.loops; i++) {
+            this.addCircle(template, cfg.loopRadius, circlePos.toImmutable(), map);
 
             // New circle
-            double zScale = ((1.5 * this.config.loops) - i) / ((double) this.config.loops * 1.5);
-            int zMove = MathHelper.nextInt(random, (int) Math.ceil((32 * zScale)), (int) Math.ceil((64 * zScale)));
-            int yVar = this.config.maxYVariation / 2;
-            int y = MathHelper.nextInt(random, 75 - yVar, 75 + yVar);
+            int zVarMax = MathHelper.ceil(mZVarMax * i + cfg.zVarMax.start);
+            int zVarMin = MathHelper.ceil(mZVarMin * i + cfg.zVarMin.start);
+            int zMove = MathHelper.nextInt(random, zVarMax, zVarMin);
+            int yVar = cfg.yVarMax / 2;
+            int y = MathHelper.nextInt(random, 128 - yVar, 128 + yVar);
             int xMove = MathHelper.nextInt(random, -16, 16);
             circlePos.move(Direction.SOUTH, zMove);
             circlePos.move(Direction.EAST, xMove);
             circlePos.setY(y);
         }
 
-        map.setSpawn(new BlockPos(0, 65, 0));
+        map.setSpawn(new BlockPos(0, 123, 0));
 
         return map;
     }
 
-    private void spawnPlatform(MapTemplate template, LoopDeLoopMap map) {
-        BlockPos min = new BlockPos(-5, 64, -5);
-        BlockPos max = new BlockPos(5, 64, 5);
+    private void spawnPlatform(MapTemplate template) {
+        BlockPos min = new BlockPos(-5, 122, -5);
+        BlockPos max = new BlockPos(5, 122, 5);
 
         for (BlockPos pos : BlockPos.iterate(min, max)) {
             template.setBlockState(pos, Blocks.RED_TERRACOTTA.getDefaultState());

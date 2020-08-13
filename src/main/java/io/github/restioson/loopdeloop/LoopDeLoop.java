@@ -3,10 +3,10 @@ package io.github.restioson.loopdeloop;
 import io.github.restioson.loopdeloop.game.LoopDeLoopConfig;
 import io.github.restioson.loopdeloop.game.LoopDeLoopWaiting;
 import net.fabricmc.api.ModInitializer;
-import xyz.nucleoid.plasmid.game.GameType;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.nucleoid.plasmid.game.GameType;
 
 public final class LoopDeLoop implements ModInitializer {
     public static final String ID = "loopdeloop";

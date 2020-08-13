@@ -1,15 +1,15 @@
 {
   "type": "loopdeloop:loopdeloop",
   "loops": 100,
-  "time_limit_secs": 300,
+  "time_limit_secs": 240,
   "start_rockets": 30,
-  "y_var_max": 40,
+  "y_var_max": 70,
   "z_var_max": {
     "start": 32,
-    "end": 20
+    "end": 16
   },
   "z_var_min": {
-    "start": 28,
-    "end": 14
+    "start": 24,
+    "end": 10
   }
 }

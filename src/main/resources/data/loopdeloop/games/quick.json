@@ -1,7 +1,7 @@
 {
   "type": "loopdeloop:loopdeloop",
-  "loops": 50,
-  "time_limit_secs": 120,
+  "loops": 20,
+  "time_limit_secs": 45,
   "start_rockets": 3,
   "y_var_max": 28,
   "z_var_max": {

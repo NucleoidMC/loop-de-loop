@@ -2,7 +2,11 @@ package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
+import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
@@ -12,9 +16,6 @@ import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.world.bubble.BubbleWorldConfig;
 
 import java.util.concurrent.CompletableFuture;
@@ -85,9 +86,9 @@ public final class LoopDeLoopWaiting {
         this.spawnPlayer(player);
     }
 
-    private boolean onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+    private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
         this.spawnPlayer(player);
-        return true;
+        return ActionResult.FAIL;
     }
 
     private void spawnPlayer(ServerPlayerEntity player) {

@@ -2,7 +2,6 @@ package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
-import xyz.nucleoid.plasmid.game.GameWorld;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -10,6 +9,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.game.GameWorld;
 
 public final class LoopDeLoopSpawnLogic {
     private final GameWorld gameWorld;
