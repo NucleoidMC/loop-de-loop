@@ -31,7 +31,7 @@ public final class LoopDeLoopGenerator {
         this.spawnPlatform(template);
 
         BlockPos.Mutable circlePos = new BlockPos.Mutable();
-        circlePos.set(0, 128, 20);
+        circlePos.set(0, 128, 32);
         Random random = new Random();
 
         // y = mx + c  -- these are gradient values
