@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
@@ -35,18 +36,18 @@ public final class LoopDeLoopWaiting {
         this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
     }
 
-    public static CompletableFuture<Void> open(MinecraftServer server, LoopDeLoopConfig config) {
+    public static CompletableFuture<Void> open(GameOpenContext<LoopDeLoopConfig> context) {
 
-        LoopDeLoopGenerator generator = new LoopDeLoopGenerator(config);
+        LoopDeLoopGenerator generator = new LoopDeLoopGenerator(context.getConfig());
 
         return generator.create().thenAccept(map -> {
             BubbleWorldConfig worldConfig = new BubbleWorldConfig()
-                    .setGenerator(map.asGenerator(server))
+                    .setGenerator(map.asGenerator(context.getServer()))
                     .setDefaultGameMode(GameMode.SPECTATOR);
 
-            GameWorld gameWorld = GameWorld.open(server, worldConfig);
+            GameWorld gameWorld = context.openWorld(worldConfig);
 
-            LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(gameWorld, map, config);
+            LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(gameWorld, map, context.getConfig());
 
             gameWorld.openGame(game -> {
                 game.setRule(GameRule.CRAFTING, RuleResult.DENY);
