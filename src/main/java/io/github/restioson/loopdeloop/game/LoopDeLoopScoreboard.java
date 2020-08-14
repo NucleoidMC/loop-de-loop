@@ -5,10 +5,8 @@ import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.scoreboard.ServerScoreboard;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +33,7 @@ public class LoopDeLoopScoreboard {
         this.totalHoops = totalHoops;
     }
 
-    public void render(List<Pair<ServerPlayerEntity, LoopDeLoopPlayer>> topPlayers) {
+    public void render(List<LoopDeLoopPlayer> leaderboard) {
         String top = String.format(
                 "%sTotal hoops:%s %s",
                 Formatting.AQUA + Formatting.BOLD.toString(),
@@ -46,13 +44,13 @@ public class LoopDeLoopScoreboard {
         List<String> lines = new ArrayList<>();
         lines.add(top);
 
-        for (Pair<ServerPlayerEntity, LoopDeLoopPlayer> pair : topPlayers) {
+        for (LoopDeLoopPlayer entry : leaderboard) {
             String line = String.format(
                     "%s%s:%s %d hoops",
                     Formatting.AQUA,
-                    pair.getLeft().getEntityName(),
+                    entry.player.getEntityName(),
                     Formatting.RESET,
-                    pair.getRight().lastHoop + 1
+                    entry.lastHoop + 1
             );
             lines.add(line);
         }
