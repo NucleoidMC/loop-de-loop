@@ -140,6 +140,7 @@ public final class LoopDeLoopActive {
 
     private void removePlayer(ServerPlayerEntity player) {
         this.playerStates.remove(player);
+        this.timerBar.removePlayer(player);
     }
 
     // thx https://stackoverflow.com/a/6810409/4871468
