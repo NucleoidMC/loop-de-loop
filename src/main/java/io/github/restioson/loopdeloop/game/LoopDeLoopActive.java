@@ -5,6 +5,7 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -25,6 +26,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -134,12 +136,10 @@ public final class LoopDeLoopActive {
             this.spawnSpectator(player);
         }
         this.timerBar.addPlayer(player);
-        this.gameWorld.getWorld().getScoreboard().addPlayerToTeam(player.getEntityName(), this.team);
     }
 
     private void removePlayer(ServerPlayerEntity player) {
         this.playerStates.remove(player);
-        this.gameWorld.getWorld().getScoreboard().removePlayerFromTeam(player.getEntityName(), this.team);
     }
 
     // thx https://stackoverflow.com/a/6810409/4871468
@@ -206,6 +206,14 @@ public final class LoopDeLoopActive {
             } else {
                 this.broadcastTitle(new LiteralText("Go!").formatted(Formatting.BOLD));
                 this.broadcastSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, 2.0F);
+
+                // Delete spawn platform
+                BlockPos min = new BlockPos(-5, 122, -5);
+                BlockPos max = new BlockPos(5, 122, 5);
+
+                for (BlockPos pos : BlockPos.iterate(min, max)) {
+                    this.gameWorld.getWorld().setBlockState(pos, Blocks.AIR.getDefaultState());
+                }
             }
         }
     }
