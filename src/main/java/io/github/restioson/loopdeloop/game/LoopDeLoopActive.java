@@ -138,10 +138,12 @@ public final class LoopDeLoopActive {
             this.spawnSpectator(player);
         }
         this.timerBar.addPlayer(player);
+        this.gameWorld.getWorld().getScoreboard().addPlayerToTeam(player.getEntityName(), this.team);
     }
 
     private void removePlayer(ServerPlayerEntity player) {
         this.player_states.remove(player);
+        this.gameWorld.getWorld().getScoreboard().removePlayerFromTeam(player.getEntityName(), this.team);
     }
 
     // thx https://stackoverflow.com/a/6810409/4871468
