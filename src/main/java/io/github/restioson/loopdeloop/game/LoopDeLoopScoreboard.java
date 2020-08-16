@@ -14,9 +14,9 @@ import java.util.List;
 
 public class LoopDeLoopScoreboard {
 
-    ServerScoreboard scoreboard;
-    ScoreboardObjective hoops;
-    int totalHoops;
+    private final ServerScoreboard scoreboard;
+    private final ScoreboardObjective hoops;
+    private final int totalHoops;
 
     public LoopDeLoopScoreboard(ServerScoreboard scoreboard, int totalHoops) {
         ScoreboardObjective scoreboardObjective = new ScoreboardObjective(
