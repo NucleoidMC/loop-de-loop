@@ -47,7 +47,7 @@ public final class LoopDeLoopActive {
     private final LoopDeLoopConfig config;
     private final List<LoopDeLoopWinner> finished;
     private final LoopDeLoopSpawnLogic spawnLogic;
-    private final LoopDeLoopTimerBar timerBar = new LoopDeLoopTimerBar();
+    private final LoopDeLoopTimerBar timerBar;
     private LoopDeLoopScoreboard scoreboard;
     // Only stores flying players, i.e non-completed players
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> playerStates;
@@ -65,6 +65,7 @@ public final class LoopDeLoopActive {
         this.config = config;
         this.finished = new ArrayList<>();
         this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
+        this.timerBar = gameWorld.addResource(new LoopDeLoopTimerBar(gameWorld));
         this.playerStates = new Object2ObjectOpenHashMap<>();
 
         for (ServerPlayerEntity player : participants) {
@@ -118,29 +119,25 @@ public final class LoopDeLoopActive {
         long time = world.getTime();
         this.startTime = time - (time % 20) + (4 * 20) + 19;
         this.finishTime = this.startTime + (this.config.timeLimit * 20);
-        this.scoreboard = new LoopDeLoopScoreboard(
-                this.gameWorld.getWorld().getScoreboard(),
+        this.scoreboard = this.gameWorld.addResource(new LoopDeLoopScoreboard(
+                this.gameWorld,
                 this.config.loops
-        );
+        ));
         this.scoreboard.render(this.buildLeaderboard());
     }
 
     private void onClose() {
         this.gameWorld.getWorld().getScoreboard().removeTeam(this.team);
-        this.timerBar.close();
-        this.scoreboard.close();
     }
 
     private void addPlayer(ServerPlayerEntity player) {
         if (!this.playerStates.containsKey(player)) {
             this.spawnSpectator(player);
         }
-        this.timerBar.addPlayer(player);
     }
 
     private void removePlayer(ServerPlayerEntity player) {
         this.playerStates.remove(player);
-        this.timerBar.removePlayer(player);
     }
 
     // thx https://stackoverflow.com/a/6810409/4871468

@@ -1,36 +1,25 @@
 package io.github.restioson.loopdeloop.game;
 
 import net.minecraft.entity.boss.BossBar;
-import net.minecraft.entity.boss.ServerBossBar;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
+import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.widget.BossBarWidget;
 
 public final class LoopDeLoopTimerBar implements AutoCloseable {
-    private final ServerBossBar bar;
+    private final BossBarWidget bar;
 
-    public LoopDeLoopTimerBar() {
+    public LoopDeLoopTimerBar(GameWorld gameWorld) {
         LiteralText title = new LiteralText("Waiting for the game to start...");
 
-        this.bar = new ServerBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
-        this.bar.setDarkenSky(false);
-        this.bar.setDragonMusic(false);
-        this.bar.setThickenFog(false);
+        this.bar = BossBarWidget.open(gameWorld.getPlayerSet(), title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
     }
 
     public void update(long ticksUntilEnd, long totalTicksUntilEnd) {
         if (ticksUntilEnd % 20 == 0) {
-            this.bar.setName(this.getText(ticksUntilEnd));
-            this.bar.setPercent((float) ticksUntilEnd / totalTicksUntilEnd);
+            this.bar.setTitle(this.getText(ticksUntilEnd));
+            this.bar.setProgress((float) ticksUntilEnd / totalTicksUntilEnd);
         }
-    }
-
-    public void addPlayer(ServerPlayerEntity player) {
-        this.bar.addPlayer(player);
-    }
-
-    public void removePlayer(ServerPlayerEntity player) {
-        this.bar.removePlayer(player);
     }
 
     private Text getText(long ticksUntilEnd) {
@@ -45,7 +34,6 @@ public final class LoopDeLoopTimerBar implements AutoCloseable {
 
     @Override
     public void close() {
-        this.bar.clearPlayers();
-        this.bar.setVisible(false);
+        this.bar.close();
     }
 }
