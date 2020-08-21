@@ -89,17 +89,6 @@ public final class LoopDeLoopWaiting {
     }
 
     private void addPlayer(ServerPlayerEntity player) {
-        String[] lines = new String[] {
-                "Loop-de-loop - fly through all the hoops with your elytra. Whoever does it first wins!",
-                "You start with some rockets and can get more by flying through hoops, or when you fail a hoop."
-        };
-
-        for (String line : lines) {
-            Text text = new LiteralText(line).formatted(Formatting.GOLD);
-            player.sendMessage(text, false);
-            player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-        }
-
         this.spawnPlayer(player);
     }
 
