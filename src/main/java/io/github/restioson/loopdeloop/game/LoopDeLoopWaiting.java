@@ -4,20 +4,15 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
+import xyz.nucleoid.plasmid.game.GameWaitingLobby;
 import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.StartResult;
-import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
-import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.world.bubble.BubbleWorldConfig;
@@ -51,38 +46,19 @@ public final class LoopDeLoopWaiting {
             return context.openWorld(worldConfig).thenApply(gameWorld -> {
                 LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(gameWorld, map, context.getConfig());
 
-                gameWorld.openGame(game -> {
-                    game.setRule(GameRule.CRAFTING, RuleResult.DENY);
-                    game.setRule(GameRule.PORTALS, RuleResult.DENY);
-                    game.setRule(GameRule.PVP, RuleResult.DENY);
-                    game.setRule(GameRule.HUNGER, RuleResult.DENY);
+                return GameWaitingLobby.open(gameWorld, context.getConfig().players, game -> {
                     game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
 
                     game.on(RequestStartListener.EVENT, waiting::requestStart);
-                    game.on(OfferPlayerListener.EVENT, waiting::offerPlayer);
 
                     game.on(PlayerAddListener.EVENT, waiting::addPlayer);
                     game.on(PlayerDeathListener.EVENT, waiting::onPlayerDeath);
                 });
-
-                return gameWorld;
             });
         });
     }
 
-    private JoinResult offerPlayer(ServerPlayerEntity player) {
-        if (this.gameWorld.getPlayerCount() >= this.config.players.getMaxPlayers()) {
-            return JoinResult.gameFull();
-        }
-
-        return JoinResult.ok();
-    }
-
     private StartResult requestStart() {
-        if (this.gameWorld.getPlayerCount() < this.config.players.getMinPlayers()) {
-            return StartResult.NOT_ENOUGH_PLAYERS;
-        }
-
         LoopDeLoopActive.open(this.gameWorld, this.map, this.config);
 
         return StartResult.OK;
