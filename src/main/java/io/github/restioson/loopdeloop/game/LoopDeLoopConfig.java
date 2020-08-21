@@ -13,7 +13,8 @@ public final class LoopDeLoopConfig {
             Codec.INT.fieldOf("start_rockets").forGetter(config -> config.startRockets),
             Codec.INT.fieldOf("y_var_max").forGetter(config -> config.yVarMax),
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(config -> config.zVarMax),
-            ZVariation.CODEC.fieldOf("z_var_min").forGetter(config -> config.zVarMin)
+            ZVariation.CODEC.fieldOf("z_var_min").forGetter(config -> config.zVarMin),
+            Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(config -> config.flappyMode)
     ).apply(instance, LoopDeLoopConfig::new));
 
     public final PlayerConfig players;
@@ -24,6 +25,7 @@ public final class LoopDeLoopConfig {
     public final int yVarMax;
     public final ZVariation zVarMax;
     public final ZVariation zVarMin;
+    public final boolean flappyMode;
 
     public LoopDeLoopConfig(
             PlayerConfig players,
@@ -33,7 +35,8 @@ public final class LoopDeLoopConfig {
             int startRockets,
             int yVarMax,
             ZVariation zVarMax,
-            ZVariation zVarMin
+            ZVariation zVarMin,
+            boolean flappyMode
     ) {
         this.players = players;
         this.timeLimit = timeLimit;
@@ -43,6 +46,7 @@ public final class LoopDeLoopConfig {
         this.yVarMax = yVarMax;
         this.zVarMax = zVarMax;
         this.zVarMin = zVarMin;
+        this.flappyMode = flappyMode;
     }
 
     public static class ZVariation {

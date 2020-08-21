@@ -1,0 +1,17 @@
+{
+  "type": "loopdeloop:loopdeloop",
+  "loops": 40,
+  "time_limit_secs": 120,
+  "start_rockets": 3,
+  "y_var_max": 28,
+  "z_var_max": {
+    "start": 32,
+    "end": 20
+  },
+  "z_var_min": {
+    "start": 28,
+    "end": 14
+  },
+  "loop_radius": 6,
+  "flappy_mode": true
+}

@@ -10,9 +10,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.ItemCooldownManager;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.scoreboard.ServerScoreboard;
@@ -26,6 +28,8 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -58,6 +62,8 @@ public final class LoopDeLoopActive {
     private long closeTime = -1;
     private long finishTime = -1;
     private long startTime = -1;
+    private static final int LEAP_INTERVAL_TICKS = 5;
+    private static final double LEAP_VELOCITY = 3.0;
 
     private LoopDeLoopActive(GameWorld gameWorld, LoopDeLoopMap map, LoopDeLoopConfig config, Set<ServerPlayerEntity> participants) {
         this.gameWorld = gameWorld;
@@ -97,7 +103,32 @@ public final class LoopDeLoopActive {
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
             game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
+
+            game.on(UseItemListener.EVENT, active::onUseItem);
         });
+    }
+
+    private TypedActionResult<ItemStack> onUseItem(ServerPlayerEntity player, Hand hand) {
+        ItemStack heldStack = player.getStackInHand(hand);
+
+        if (heldStack.getItem() == Items.FEATHER) {
+            ItemCooldownManager cooldown = player.getItemCooldownManager();
+            if (!cooldown.isCoolingDown(heldStack.getItem())) {
+                LoopDeLoopPlayer state = this.playerStates.get(player);
+                if (state != null) {
+                    Vec3d rotationVec = player.getRotationVec(1.0F);
+                    player.setVelocity(rotationVec.multiply(LEAP_VELOCITY));
+                    Vec3d oldVel = player.getVelocity();
+                    player.setVelocity(oldVel.x, oldVel.y + 0.5f, oldVel.z);
+                    player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
+
+                    player.playSound(SoundEvents.ENTITY_HORSE_SADDLE, 1.0F, 1.0F);
+                    cooldown.set(heldStack.getItem(), LEAP_INTERVAL_TICKS);
+                }
+            }
+        }
+
+        return TypedActionResult.pass(ItemStack.EMPTY);
     }
 
     private void onOpen() {
@@ -114,10 +145,19 @@ public final class LoopDeLoopActive {
         for (ServerPlayerEntity player : this.playerStates.keySet()) {
             scoreboard.addPlayerToTeam(player.getEntityName(), this.team);
 
-            String[] lines = new String[] {
-                    "Loop-de-loop - fly through all the hoops with your elytra. Whoever does it first wins!",
-                    "You start with some rockets and can get more by flying through hoops, or when you fail a hoop."
-            };
+            String[] lines;
+
+            if (this.config.flappyMode) {
+                lines = new String[] {
+                        "Loop-de-loop - fly through all the hoops with your feather. Whoever does it first wins!",
+                        "Right-click with your feather to fly forwards."
+                };
+            } else {
+                lines = new String[] {
+                        "Loop-de-loop - fly through all the hoops with your elytra. Whoever does it first wins!",
+                        "You start with some rockets and can get more by flying through hoops, or when you fail a hoop."
+                };
+            }
 
             for (String line : lines) {
                 Text text = new LiteralText(line).formatted(Formatting.GOLD);
@@ -271,7 +311,10 @@ public final class LoopDeLoopActive {
 
         if (nextHoop.intersectsSegment(lastPos, currentPos)) {
             player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
-            giveRocket(player, 1);
+
+            if (!this.config.flappyMode) {
+                giveRocket(player, 1);
+            }
 
             state.lastHoop = nextHoopIdx;
             state.previousFails = 0;
@@ -344,7 +387,10 @@ public final class LoopDeLoopActive {
 
         state.previousFails += 1;
         state.lastFailOrSuccess = time;
-        giveRocket(player, Math.min(state.previousFails, 3));
+
+        if (!this.config.flappyMode) {
+            giveRocket(player, Math.min(state.previousFails, 3));
+        }
 
         ServerWorld world = this.gameWorld.getWorld();
         List<FireworkRocketEntity> rockets = world.getEntitiesByType(
@@ -416,12 +462,19 @@ public final class LoopDeLoopActive {
         this.spawnLogic.resetPlayer(player, GameMode.ADVENTURE);
         this.spawnLogic.spawnPlayer(player);
 
-        ItemStack elytra = ItemStackBuilder.of(Items.ELYTRA)
-                .setUnbreakable()
-                .build();
-        player.equipStack(EquipmentSlot.CHEST, elytra);
+        if (this.config.flappyMode) {
+            ItemStack feather = ItemStackBuilder.of(Items.FEATHER)
+                    .addLore(new LiteralText("Flap flap"))
+                    .build();
+            player.equipStack(EquipmentSlot.OFFHAND, feather);
+        } else {
+            ItemStack elytra = ItemStackBuilder.of(Items.ELYTRA)
+                    .setUnbreakable()
+                    .build();
+            player.equipStack(EquipmentSlot.CHEST, elytra);
 
-        giveRocket(player, this.config.startRockets);
+            giveRocket(player, this.config.startRockets);
+        }
     }
 
     private static void giveRocket(ServerPlayerEntity player, int n) {
