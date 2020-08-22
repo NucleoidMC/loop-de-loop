@@ -33,8 +33,8 @@ public class LoopDeLoopHoop {
     }
 
     public boolean contains(Vec3d pos) {
-        return MathHelper.floor(pos.getZ()) == this.centre.getZ()
-                && this.contains(pos.getX(), pos.getY());
+        double centerZ = this.centre.getZ() + 0.5;
+        return Math.abs(pos.getZ() - centerZ) <= 0.8 && this.contains(pos.getX(), pos.getY());
     }
 
     private boolean contains(double x, double y) {

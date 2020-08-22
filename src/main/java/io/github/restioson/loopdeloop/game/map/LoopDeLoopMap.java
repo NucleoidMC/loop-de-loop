@@ -3,6 +3,8 @@ package io.github.restioson.loopdeloop.game.map;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.map.MapTickets;
 import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.game.map.template.TemplateChunkGenerator;
 
@@ -34,5 +36,9 @@ public final class LoopDeLoopMap {
 
     public ChunkGenerator asGenerator(MinecraftServer server) {
         return new TemplateChunkGenerator(server, this.template, BlockPos.ORIGIN);
+    }
+
+    public MapTickets acquireTickets(GameWorld gameWorld) {
+        return MapTickets.acquire(gameWorld.getWorld(), this.template.getBounds());
     }
 }

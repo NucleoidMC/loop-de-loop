@@ -32,6 +32,8 @@ public final class LoopDeLoopWaiting {
         this.config = config;
 
         this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
+
+        gameWorld.addResource(map.acquireTickets(gameWorld));
     }
 
     public static CompletableFuture<GameWorld> open(GameOpenContext<LoopDeLoopConfig> context) {
