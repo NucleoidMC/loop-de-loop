@@ -164,8 +164,6 @@ public final class LoopDeLoopActive {
                 player.sendMessage(text, false);
             }
 
-            player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
-
             this.spawnParticipant(player);
         }
 

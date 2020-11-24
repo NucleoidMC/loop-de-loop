@@ -16,7 +16,6 @@ repositories {
     mavenLocal()
 }
 
-
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -26,7 +25,7 @@ dependencies {
 
     implementation 'com.google.code.findbugs:jsr305:3.0.1'
 
-    modImplementation 'xyz.nucleoid:plasmid:0.3.6'
+    modImplementation "xyz.nucleoid:plasmid:${project.plasmid_version}"
 
      modRuntime("com.github.SuperCoder7979:databreaker:0.2.6") {
          exclude module: "fabric-loader"
