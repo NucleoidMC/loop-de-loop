@@ -122,7 +122,7 @@ public final class LoopDeLoopActive {
                     player.setVelocity(oldVel.x, oldVel.y + 0.5f, oldVel.z);
                     player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
 
-                    player.playSound(SoundEvents.ENTITY_HORSE_SADDLE, 1.0F, 1.0F);
+                    player.playSound(SoundEvents.ENTITY_HORSE_SADDLE, SoundCategory.PLAYERS,1.0F, 1.0F);
                     cooldown.set(heldStack.getItem(), LEAP_INTERVAL_TICKS);
                 }
             }
@@ -162,8 +162,9 @@ public final class LoopDeLoopActive {
             for (String line : lines) {
                 Text text = new LiteralText(line).formatted(Formatting.GOLD);
                 player.sendMessage(text, false);
-                player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
             }
+
+            player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
             this.spawnParticipant(player);
         }
