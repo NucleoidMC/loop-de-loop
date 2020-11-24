@@ -6,62 +6,59 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.fantasy.BubbleWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
+import xyz.nucleoid.plasmid.game.GameOpenProcedure;
+import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
-import xyz.nucleoid.plasmid.world.bubble.BubbleWorldConfig;
-
-import java.util.concurrent.CompletableFuture;
 
 public final class LoopDeLoopWaiting {
-    private final GameWorld gameWorld;
+    private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
     private final LoopDeLoopConfig config;
 
     private final LoopDeLoopSpawnLogic spawnLogic;
 
-    private LoopDeLoopWaiting(GameWorld gameWorld, LoopDeLoopMap map, LoopDeLoopConfig config) {
-        this.gameWorld = gameWorld;
+    private LoopDeLoopWaiting(GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
+        this.gameSpace = gameSpace;
         this.map = map;
         this.config = config;
 
-        this.spawnLogic = new LoopDeLoopSpawnLogic(gameWorld, map);
+        this.spawnLogic = new LoopDeLoopSpawnLogic(gameSpace, map);
 
-        gameWorld.addResource(map.acquireTickets(gameWorld));
+        gameSpace.addResource(map.acquireTickets(gameSpace));
     }
 
-    public static CompletableFuture<GameWorld> open(GameOpenContext<LoopDeLoopConfig> context) {
-
+    public static GameOpenProcedure open(GameOpenContext<LoopDeLoopConfig> context) {
         LoopDeLoopGenerator generator = new LoopDeLoopGenerator(context.getConfig());
 
-        return generator.create().thenCompose(map -> {
-            BubbleWorldConfig worldConfig = new BubbleWorldConfig()
-                    .setGenerator(map.asGenerator(context.getServer()))
-                    .setDefaultGameMode(GameMode.SPECTATOR);
+        LoopDeLoopMap map = generator.build();
+        BubbleWorldConfig worldConfig = new BubbleWorldConfig()
+                .setGenerator(map.asGenerator(context.getServer()))
+                .setDefaultGameMode(GameMode.SPECTATOR);
 
-            return context.openWorld(worldConfig).thenApply(gameWorld -> {
-                LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(gameWorld, map, context.getConfig());
+        return context.createOpenProcedure(worldConfig, game -> {
+            LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(game.getSpace(), map, context.getConfig());
 
-                return GameWaitingLobby.open(gameWorld, context.getConfig().players, game -> {
-                    game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
+            GameWaitingLobby.applyTo(game, context.getConfig().players);
 
-                    game.on(RequestStartListener.EVENT, waiting::requestStart);
+            game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
 
-                    game.on(PlayerAddListener.EVENT, waiting::addPlayer);
-                    game.on(PlayerDeathListener.EVENT, waiting::onPlayerDeath);
-                });
-            });
+            game.on(RequestStartListener.EVENT, waiting::requestStart);
+
+            game.on(PlayerAddListener.EVENT, waiting::addPlayer);
+            game.on(PlayerDeathListener.EVENT, waiting::onPlayerDeath);
         });
     }
 
     private StartResult requestStart() {
-        LoopDeLoopActive.open(this.gameWorld, this.map, this.config);
+        LoopDeLoopActive.open(this.gameSpace, this.map, this.config);
 
         return StartResult.OK;
     }

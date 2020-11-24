@@ -9,14 +9,14 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.GameSpace;
 
 public final class LoopDeLoopSpawnLogic {
-    private final GameWorld gameWorld;
+    private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
 
-    public LoopDeLoopSpawnLogic(GameWorld gameWorld, LoopDeLoopMap map) {
-        this.gameWorld = gameWorld;
+    public LoopDeLoopSpawnLogic(GameSpace gameSpace, LoopDeLoopMap map) {
+        this.gameSpace = gameSpace;
         this.map = map;
     }
 
@@ -33,7 +33,7 @@ public final class LoopDeLoopSpawnLogic {
     }
 
     public void spawnPlayer(ServerPlayerEntity player) {
-        ServerWorld world = this.gameWorld.getWorld();
+        ServerWorld world = this.gameSpace.getWorld();
 
         BlockPos pos = this.map.getSpawn();
         if (pos == null) {

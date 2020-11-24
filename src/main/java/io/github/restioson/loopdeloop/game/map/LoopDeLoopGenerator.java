@@ -3,14 +3,12 @@ package io.github.restioson.loopdeloop.game.map;
 import io.github.restioson.loopdeloop.game.LoopDeLoopConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import xyz.nucleoid.plasmid.game.map.template.MapTemplate;
+import xyz.nucleoid.plasmid.map.template.MapTemplate;
 
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
 public final class LoopDeLoopGenerator {
     public final LoopDeLoopConfig config;
@@ -19,11 +17,7 @@ public final class LoopDeLoopGenerator {
         this.config = config;
     }
 
-    public CompletableFuture<LoopDeLoopMap> create() {
-        return CompletableFuture.supplyAsync(this::build, Util.getMainWorkerExecutor());
-    }
-
-    private LoopDeLoopMap build() {
+    public LoopDeLoopMap build() {
         MapTemplate template = MapTemplate.createEmpty();
         LoopDeLoopMap map = new LoopDeLoopMap(template);
         LoopDeLoopConfig cfg = this.config;

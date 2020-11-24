@@ -1,5 +1,6 @@
 {
   "type": "loopdeloop:loopdeloop",
+  "name": "Flappy Loop",
   "loops": 40,
   "time_limit_secs": 120,
   "start_rockets": 3,

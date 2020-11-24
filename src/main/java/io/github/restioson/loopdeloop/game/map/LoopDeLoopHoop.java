@@ -3,8 +3,7 @@ package io.github.restioson.loopdeloop.game.map;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class LoopDeLoopHoop {
     public BlockPos centre;

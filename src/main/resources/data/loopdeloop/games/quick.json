@@ -1,5 +1,6 @@
 {
   "type": "loopdeloop:loopdeloop",
+  "name": "Loop-de-Loop: Quick",
   "loops": 20,
   "time_limit_secs": 45,
   "start_rockets": 3,

@@ -3,16 +3,15 @@ package io.github.restioson.loopdeloop.game;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.widget.BossBarWidget;
+import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
-public final class LoopDeLoopTimerBar implements AutoCloseable {
+public final class LoopDeLoopTimerBar {
     private final BossBarWidget bar;
 
-    public LoopDeLoopTimerBar(GameWorld gameWorld) {
+    public LoopDeLoopTimerBar(GlobalWidgets widgets) {
         LiteralText title = new LiteralText("Waiting for the game to start...");
-
-        this.bar = BossBarWidget.open(gameWorld.getPlayerSet(), title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
+        this.bar = widgets.addBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
     }
 
     public void update(long ticksUntilEnd, long totalTicksUntilEnd) {
@@ -30,10 +29,5 @@ public final class LoopDeLoopTimerBar implements AutoCloseable {
         String time = String.format("%02d:%02d left", minutes, seconds);
 
         return new LiteralText(time);
-    }
-
-    @Override
-    public void close() {
-        this.bar.close();
     }
 }
