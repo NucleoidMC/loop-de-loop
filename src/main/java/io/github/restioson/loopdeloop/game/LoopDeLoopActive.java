@@ -1,5 +1,6 @@
 package io.github.restioson.loopdeloop.game;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
@@ -16,6 +17,7 @@ import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket.Flag;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.scoreboard.ServerScoreboard;
@@ -259,7 +261,15 @@ public final class LoopDeLoopActive {
                     continue;
                 }
 
-                player.teleport(state.lastPos.x, state.lastPos.y, state.lastPos.z);
+                double destX = state.lastPos.x;
+                double destY = state.lastPos.y;
+                double destZ = state.lastPos.z;
+
+                // Set X and Y as relative so it will send 0 change when we pass yaw (yaw - yaw = 0) and pitch
+                Set<Flag> flags = ImmutableSet.of(Flag.X_ROT, Flag.Y_ROT);
+
+                // Teleport without changing the pitch and yaw
+                player.networkHandler.teleportRequest(destX, destY, destZ, player.yaw, player.pitch, flags);
             }
         }
 
