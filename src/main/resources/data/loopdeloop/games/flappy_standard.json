@@ -17,13 +17,8 @@
   "flappy_mode": true,
   "loop_blocks": [
     "red_concrete",
-    "orange_concrete",
     "yellow_concrete",
     "green_concrete",
-    "lime_concrete",
-    "cyan_concrete",
-    "blue_concrete",
-    "purple_concrete",
-    "magenta_concrete"
+    "blue_concrete"
   ]
 }
