@@ -1,6 +1,7 @@
 package io.github.restioson.loopdeloop.game.map;
 
 import io.github.restioson.loopdeloop.game.LoopDeLoopConfig;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -33,7 +34,8 @@ public final class LoopDeLoopGenerator {
         double mZVarMin = (cfg.zVarMin.end - cfg.zVarMin.start) / (double) cfg.loops;
 
         for (int i = 0; i < cfg.loops; i++) {
-            this.addCircle(template, cfg.loopRadius, circlePos.toImmutable(), map);
+            Block outline = cfg.loopBlocks[i % cfg.loopBlocks.length];
+            this.addCircle(template, cfg.loopRadius, circlePos.toImmutable(), map, outline.getDefaultState());
 
             // New circle
             int zVarMax = MathHelper.ceil(mZVarMax * i + cfg.zVarMax.start);
@@ -61,14 +63,12 @@ public final class LoopDeLoopGenerator {
         }
     }
 
-    private void addCircle(MapTemplate template, int radius, BlockPos centre, LoopDeLoopMap map) {
+    private void addCircle(MapTemplate template, int radius, BlockPos centre, LoopDeLoopMap map, BlockState outline) {
         BlockPos.Mutable mutablePos = new BlockPos.Mutable();
         map.addHoop(new LoopDeLoopHoop(centre, radius));
 
         int radius2 = radius * radius;
         int outlineRadius2 = (radius - 1) * (radius - 1);
-
-        BlockState outline = Blocks.BLUE_TERRACOTTA.getDefaultState();
 
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {

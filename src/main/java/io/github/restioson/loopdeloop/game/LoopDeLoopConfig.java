@@ -1,8 +1,15 @@
 package io.github.restioson.loopdeloop.game;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.util.registry.Registry;
 import xyz.nucleoid.plasmid.game.config.PlayerConfig;
+
+import java.util.Arrays;
+import java.util.List;
 
 public final class LoopDeLoopConfig {
     public static final Codec<LoopDeLoopConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -14,7 +21,8 @@ public final class LoopDeLoopConfig {
             Codec.INT.fieldOf("y_var_max").forGetter(config -> config.yVarMax),
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(config -> config.zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(config -> config.zVarMin),
-            Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(config -> config.flappyMode)
+            Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(config -> config.flappyMode),
+            Registry.BLOCK.listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(config -> Arrays.asList(config.loopBlocks))
     ).apply(instance, LoopDeLoopConfig::new));
 
     public final PlayerConfig players;
@@ -26,6 +34,7 @@ public final class LoopDeLoopConfig {
     public final ZVariation zVarMax;
     public final ZVariation zVarMin;
     public final boolean flappyMode;
+    public final Block[] loopBlocks;
 
     public LoopDeLoopConfig(
             PlayerConfig players,
@@ -36,7 +45,8 @@ public final class LoopDeLoopConfig {
             int yVarMax,
             ZVariation zVarMax,
             ZVariation zVarMin,
-            boolean flappyMode
+            boolean flappyMode,
+            List<Block> loopBlocks
     ) {
         this.players = players;
         this.timeLimit = timeLimit;
@@ -47,6 +57,7 @@ public final class LoopDeLoopConfig {
         this.zVarMax = zVarMax;
         this.zVarMin = zVarMin;
         this.flappyMode = flappyMode;
+        this.loopBlocks = loopBlocks.toArray(new Block[0]);
     }
 
     public static class ZVariation {
