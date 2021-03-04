@@ -31,31 +31,23 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.util.*;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.plasmid.game.ConfiguredGame;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.event.GameCloseListener;
-import xyz.nucleoid.plasmid.game.event.GameOpenListener;
-import xyz.nucleoid.plasmid.game.event.GameTickListener;
-import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
-import xyz.nucleoid.plasmid.game.event.UseItemListener;
+import xyz.nucleoid.plasmid.game.event.*;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
-import xyz.nucleoid.plasmid.storage.ServerStorage;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -470,7 +462,7 @@ public final class LoopDeLoopActive {
         }
 
         gameSpace.getPlayers().sendMessage(message);
-        sendLeaderboard();
+        this.sendLeaderboard();
         this.broadcastSound(SoundEvents.ENTITY_VILLAGER_YES);
     }
 
@@ -478,8 +470,8 @@ public final class LoopDeLoopActive {
         LinkedHashMap<UUID, Long> sortedScores = LoopDeLoop.SCORE_STORAGE.getSortedScores(gameSpace.getGameConfig().getSource());
         ArrayList<Map.Entry<UUID, Long>> scoreboard = new ArrayList<>(sortedScores.entrySet());
         StringBuilder leaderboard_builder = new StringBuilder();
-        leaderboard_builder.append("Leaderboard\n");
-        for (int i = 0; i < 10; i++) {
+        leaderboard_builder.append("All Time Leaderboard\n");
+        for (int i = 0; i < 5; i++) {
             if (i >= scoreboard.size()) break;
             Map.Entry<UUID, Long> entry = scoreboard.get(i);
             leaderboard_builder.append(i + 1).append(". ");
@@ -493,6 +485,20 @@ public final class LoopDeLoopActive {
         }
 
         gameSpace.getPlayers().sendMessage(new LiteralText(leaderboard_builder.toString()).formatted(Formatting.GOLD));
+
+        for (int i = 0; i < scoreboard.size(); i++) {
+            Map.Entry<UUID, Long> entry = scoreboard.get(i);
+            int pos = i + 1;
+            gameSpace.getPlayers().forEach(player -> {
+                if (player.getUuid().equals(entry.getKey())) {
+                    player.sendMessage(new LiteralText(String.format(
+                            "%s. %s in %.2fs",
+                            pos,
+                            player.getName().asString(), entry.getValue() / 20.0f)
+                    ).formatted(Formatting.GOLD, Formatting.BOLD), false);
+                }
+            });
+        }
     }
 
     private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
