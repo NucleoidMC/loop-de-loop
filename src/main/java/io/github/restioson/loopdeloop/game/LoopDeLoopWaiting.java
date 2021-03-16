@@ -45,7 +45,7 @@ public final class LoopDeLoopWaiting {
 
         return context.createOpenProcedure(worldConfig, game -> {
             LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(game.getSpace(), map, context.getConfig());
-
+            
             GameWaitingLobby.applyTo(game, context.getConfig().players);
 
             game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
