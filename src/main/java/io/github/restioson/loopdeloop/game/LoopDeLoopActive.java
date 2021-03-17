@@ -2,6 +2,8 @@ package io.github.restioson.loopdeloop.game;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.mojang.authlib.GameProfile;
+import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
@@ -39,29 +41,17 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.event.GameCloseListener;
-import xyz.nucleoid.plasmid.game.event.GameOpenListener;
-import xyz.nucleoid.plasmid.game.event.GameTickListener;
-import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
-import xyz.nucleoid.plasmid.game.event.UseItemListener;
+import xyz.nucleoid.plasmid.game.event.*;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.github.restioson.loopdeloop.LoopDeLoop.SCORE_STORAGE;
 
 public final class LoopDeLoopActive {
     private final GameSpace gameSpace;
@@ -404,6 +394,9 @@ public final class LoopDeLoopActive {
         player.sendMessage(new LiteralText("You finished in " + ordinal + " place!"), true);
         player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
         player.setGameMode(GameMode.SPECTATOR);
+        if (gameSpace.getGameConfig().getSource() != null) {
+            SCORE_STORAGE.putPlayerTime(gameSpace.getGameConfig().getSource(), player, (time - this.startTime));
+        }
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
@@ -468,8 +461,44 @@ public final class LoopDeLoopActive {
             message = new LiteralText(message_string).formatted(Formatting.GOLD);
         }
 
-        this.broadcastMessage(message);
+        gameSpace.getPlayers().sendMessage(message);
+        this.sendLeaderboard();
         this.broadcastSound(SoundEvents.ENTITY_VILLAGER_YES);
+    }
+
+    public void sendLeaderboard() {
+        LinkedHashMap<UUID, Long> sortedScores = LoopDeLoop.SCORE_STORAGE.getSortedScores(gameSpace.getGameConfig().getSource());
+        ArrayList<Map.Entry<UUID, Long>> scoreboard = new ArrayList<>(sortedScores.entrySet());
+        StringBuilder leaderboard_builder = new StringBuilder();
+        leaderboard_builder.append("All Time Leaderboard\n");
+        for (int i = 0; i < 5; i++) {
+            if (i >= scoreboard.size()) break;
+            Map.Entry<UUID, Long> entry = scoreboard.get(i);
+            leaderboard_builder.append(i + 1).append(". ");
+            GameProfile player = gameSpace.getServer().getUserCache().getByUuid(entry.getKey());
+            if (player == null) {
+                leaderboard_builder.append("\n");
+                continue;
+            }
+            leaderboard_builder.append(player.getName());
+            leaderboard_builder.append(String.format(" in %.2fs\n", entry.getValue() / 20.0f));
+        }
+
+        gameSpace.getPlayers().sendMessage(new LiteralText(leaderboard_builder.toString()).formatted(Formatting.GOLD));
+
+        for (int i = 0; i < scoreboard.size(); i++) {
+            Map.Entry<UUID, Long> entry = scoreboard.get(i);
+            int pos = i + 1;
+            gameSpace.getPlayers().forEach(player -> {
+                if (player.getUuid().equals(entry.getKey())) {
+                    player.sendMessage(new LiteralText(String.format(
+                            "%s. %s in %.2fs",
+                            pos,
+                            player.getName().asString(), entry.getValue() / 20.0f)
+                    ).formatted(Formatting.GOLD, Formatting.BOLD), false);
+                }
+            });
+        }
     }
 
     private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
@@ -511,13 +540,6 @@ public final class LoopDeLoopActive {
     private void spawnSpectator(ServerPlayerEntity player) {
         this.spawnLogic.resetPlayer(player, GameMode.SPECTATOR);
         this.spawnLogic.spawnPlayer(player);
-    }
-
-    // TODO: extract common broadcast utils into plasmid
-    private void broadcastMessage(Text message) {
-        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
-            player.sendMessage(message, false);
-        }
     }
 
     private void broadcastTitle(Text message) {
