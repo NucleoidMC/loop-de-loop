@@ -1,6 +1,7 @@
 {
   "type": "loopdeloop:loopdeloop",
-  "name": "Flappy Loop",
+  "icon": "minecraft:feather",
+  "description": "game.loopdeloop.flappy.desc",
   "loops": 40,
   "time_limit_secs": 120,
   "start_rockets": 3,

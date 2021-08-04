@@ -1,3 +1,10 @@
 {
-    "game.loopdeloop.loopdeloop": "Loop-de-Loop"
+  "gameType.loopdeloop.loopdeloop": "Loop-de-Loop",
+  "game.loopdeloop.amplified": "Loop-de-Loop (Amplified)",
+  "game.loopdeloop.marathon": "Loop-de-Loop (Marathon)",
+  "game.loopdeloop.quick": "Loop-de-Loop (Quick)",
+  "game.loopdeloop.ridiculous": "Loop-de-Loop (Ridiculous)",
+  "game.loopdeloop.flappy_standard": "Flappy Loop",
+  "game.loopdeloop.desc": "In Loop-de-Loop, you must fly through hoops with an elytra!",
+  "game.loopdeloop.flappy.desc": "In Flappy Loop, you must use your feather to propel yourself upwards and through the hoops!"
 }

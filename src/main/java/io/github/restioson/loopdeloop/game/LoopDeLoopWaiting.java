@@ -4,67 +4,68 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.fantasy.BubbleWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
+import xyz.nucleoid.plasmid.game.GameResult;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.StartResult;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.RequestStartListener;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.game.common.GameWaitingLobby;
+import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.game.player.PlayerOffer;
+import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public final class LoopDeLoopWaiting {
+    private final ServerWorld world;
     private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
     private final LoopDeLoopConfig config;
 
     private final LoopDeLoopSpawnLogic spawnLogic;
 
-    private LoopDeLoopWaiting(GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
+    private LoopDeLoopWaiting(ServerWorld world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
+        this.world = world;
         this.gameSpace = gameSpace;
         this.map = map;
         this.config = config;
 
-        this.spawnLogic = new LoopDeLoopSpawnLogic(gameSpace, map);
-
-        gameSpace.addResource(map.acquireTickets(gameSpace));
+        this.spawnLogic = new LoopDeLoopSpawnLogic(world, map);
     }
 
     public static GameOpenProcedure open(GameOpenContext<LoopDeLoopConfig> context) {
-        LoopDeLoopGenerator generator = new LoopDeLoopGenerator(context.getConfig());
+        var config = context.config();
+        var generator = new LoopDeLoopGenerator(config);
 
-        LoopDeLoopMap map = generator.build();
-        BubbleWorldConfig worldConfig = new BubbleWorldConfig()
-                .setGenerator(map.asGenerator(context.getServer()))
-                .setDefaultGameMode(GameMode.SPECTATOR);
+        var map = generator.build();
+        var worldConfig = new RuntimeWorldConfig()
+                .setGenerator(map.asGenerator(context.server()));
 
-        return context.createOpenProcedure(worldConfig, game -> {
-            LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(game.getSpace(), map, context.getConfig());
+        return context.openWithWorld(worldConfig, (activity, world) -> {
+            LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(world, activity.getGameSpace(), map, config);
 
-            GameWaitingLobby.applyTo(game, context.getConfig().players);
+            GameWaitingLobby.addTo(activity, config.players());
+            activity.allow(GameRuleType.FALL_DAMAGE);
 
-            game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
+            activity.listen(GameActivityEvents.REQUEST_START, waiting::requestStart);
 
-            game.on(RequestStartListener.EVENT, waiting::requestStart);
-
-            game.on(PlayerAddListener.EVENT, waiting::addPlayer);
-            game.on(PlayerDeathListener.EVENT, waiting::onPlayerDeath);
+            activity.listen(GamePlayerEvents.OFFER, waiting::offerPlayer);
+            activity.listen(PlayerDeathEvent.EVENT, waiting::onPlayerDeath);
         });
     }
 
-    private StartResult requestStart() {
-        LoopDeLoopActive.open(this.gameSpace, this.map, this.config);
+    private GameResult requestStart() {
+        LoopDeLoopActive.open(this.world, this.gameSpace, this.map, this.config);
 
-        return StartResult.OK;
+        return GameResult.ok();
     }
 
-    private void addPlayer(ServerPlayerEntity player) {
-        this.spawnPlayer(player);
+    private PlayerOfferResult offerPlayer(PlayerOffer offer) {
+        return this.spawnLogic.acceptPlayer(offer, GameMode.ADVENTURE);
     }
 
     private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {

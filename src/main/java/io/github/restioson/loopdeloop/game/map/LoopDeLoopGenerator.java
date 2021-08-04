@@ -7,7 +7,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
+import xyz.nucleoid.map_templates.BlockBounds;
+import xyz.nucleoid.map_templates.MapTemplate;
 
 import java.util.Random;
 
@@ -30,18 +31,19 @@ public final class LoopDeLoopGenerator {
         Random random = new Random();
 
         // y = mx + c  -- these are gradient values
-        double mZVarMax = (cfg.zVarMax.end - cfg.zVarMax.start) / (double) cfg.loops;
-        double mZVarMin = (cfg.zVarMin.end - cfg.zVarMin.start) / (double) cfg.loops;
+        double mZVarMax = (cfg.zVarMax().end() - cfg.zVarMax().start()) / (double) cfg.loops();
+        double mZVarMin = (cfg.zVarMin().end() - cfg.zVarMin().start()) / (double) cfg.loops();
 
-        for (int i = 0; i < cfg.loops; i++) {
-            Block outline = cfg.loopBlocks[i % cfg.loopBlocks.length];
-            this.addCircle(template, cfg.loopRadius, circlePos.toImmutable(), map, outline.getDefaultState());
+        var loopBlocks = cfg.loopBlocks();
+        for (int i = 0; i < cfg.loops(); i++) {
+            Block outline = loopBlocks.get(i % loopBlocks.size());
+            this.addCircle(template, cfg.loopRadius(), circlePos.toImmutable(), map, outline.getDefaultState());
 
             // New circle
-            int zVarMax = MathHelper.ceil(mZVarMax * i + cfg.zVarMax.start);
-            int zVarMin = MathHelper.ceil(mZVarMin * i + cfg.zVarMin.start);
+            int zVarMax = MathHelper.ceil(mZVarMax * i + cfg.zVarMax().start());
+            int zVarMin = MathHelper.ceil(mZVarMin * i + cfg.zVarMin().start());
             int zMove = MathHelper.nextInt(random, zVarMax, zVarMin);
-            int yVar = cfg.yVarMax / 2;
+            int yVar = cfg.yVarMax() / 2;
             int y = MathHelper.nextInt(random, 128 - yVar, 128 + yVar);
             int xMove = MathHelper.nextInt(random, -16, 16);
             circlePos.move(Direction.SOUTH, zMove);
@@ -58,7 +60,7 @@ public final class LoopDeLoopGenerator {
         BlockPos min = new BlockPos(-5, 122, -5);
         BlockPos max = new BlockPos(5, 122, 5);
 
-        for (BlockPos pos : BlockPos.iterate(min, max)) {
+        for (BlockPos pos : BlockBounds.of(min, max)) {
             template.setBlockState(pos, Blocks.RED_TERRACOTTA.getDefaultState());
         }
     }

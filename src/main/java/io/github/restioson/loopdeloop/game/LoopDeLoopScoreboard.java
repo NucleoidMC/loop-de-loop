@@ -3,8 +3,8 @@ package io.github.restioson.loopdeloop.game;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
-import xyz.nucleoid.plasmid.widget.SidebarWidget;
+import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.widget.SidebarWidget;
 
 import java.util.List;
 
@@ -21,24 +21,15 @@ public class LoopDeLoopScoreboard {
 
     public void render(List<LoopDeLoopPlayer> leaderboard) {
         this.sidebar.set(content -> {
-            String top = String.format(
-                    "%sTotal hoops:%s %s",
-                    Formatting.AQUA + Formatting.BOLD.toString(),
-                    Formatting.RESET,
-                    this.totalHoops
-            );
-
-            content.writeLine(top);
+            var top = new LiteralText("Total hoops: ")
+                    .formatted(Formatting.AQUA, Formatting.BOLD)
+                    .append(new LiteralText(String.valueOf(this.totalHoops)).formatted(Formatting.WHITE));
+            content.add(top);
 
             for (LoopDeLoopPlayer entry : leaderboard) {
-                String line = String.format(
-                        "%s%s:%s %d hoops",
-                        Formatting.AQUA,
-                        entry.player.getEntityName(),
-                        Formatting.RESET,
-                        entry.lastHoop + 1
-                );
-                content.writeLine(line);
+                var line = entry.player.getName().shallowCopy().append(": ").formatted(Formatting.AQUA)
+                        .append(new LiteralText(String.valueOf(entry.lastHoop + 1)).formatted(Formatting.WHITE));
+                content.add(line);
             }
         });
     }

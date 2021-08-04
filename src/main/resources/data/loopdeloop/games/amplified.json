@@ -1,6 +1,7 @@
 {
   "type": "loopdeloop:loopdeloop",
-  "name": "Loop-de-Loop: Amplified",
+  "icon": "minecraft:elytra",
+  "description": "game.loopdeloop.desc",
   "loops": 100,
   "time_limit_secs": 300,
   "start_rockets": 30,

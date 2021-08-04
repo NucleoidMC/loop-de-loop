@@ -1,6 +1,7 @@
 {
   "type": "loopdeloop:loopdeloop",
-  "name": "Loop-de-Loop",
+  "icon": "minecraft:elytra",
+  "description": "game.loopdeloop.desc",
   "loops": 50,
   "time_limit_secs": 120,
   "start_rockets": 3,

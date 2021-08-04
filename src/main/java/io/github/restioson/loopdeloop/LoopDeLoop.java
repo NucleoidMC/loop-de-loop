@@ -14,8 +14,8 @@ public final class LoopDeLoop implements ModInitializer {
 
     public static final GameType<LoopDeLoopConfig> TYPE = GameType.register(
             new Identifier(LoopDeLoop.ID, "loopdeloop"),
-            LoopDeLoopWaiting::open,
-            LoopDeLoopConfig.CODEC
+            LoopDeLoopConfig.CODEC,
+            LoopDeLoopWaiting::open
     );
 
     @Override
