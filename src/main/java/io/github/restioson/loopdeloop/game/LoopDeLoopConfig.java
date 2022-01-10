@@ -32,7 +32,7 @@ public final record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            Registry.BLOCK.listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks)
+            Registry.BLOCK.getCodec().listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks)
     ).apply(instance, LoopDeLoopConfig::new));
 
     public record ZVariation(int start, int end) {
