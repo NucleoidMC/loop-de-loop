@@ -7,6 +7,7 @@ import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.nucleoid.plasmid.game.GameType;
+import xyz.nucleoid.plasmid.game.stats.StatisticKey;
 
 public final class LoopDeLoop implements ModInitializer {
     public static final String ID = "loopdeloop";
@@ -17,6 +18,9 @@ public final class LoopDeLoop implements ModInitializer {
             LoopDeLoopConfig.CODEC,
             LoopDeLoopWaiting::open
     );
+
+    public static final StatisticKey<Integer> TOTAL_HOOPS = StatisticKey.intKey(new Identifier(ID, "total_hoops"), StatisticKey.StorageType.TOTAL);
+    public static final StatisticKey<Integer> MISSED_HOOPS = StatisticKey.intKey(new Identifier(ID, "missed_hoops"), StatisticKey.StorageType.TOTAL);
 
     @Override
     public void onInitialize() {

@@ -12,6 +12,9 @@ public class LoopDeLoopPlayer {
     public long lastFailOrSuccess = -1;
     public int previousFails = -1;
 
+    public int totalHoops;
+    public int missedHoops;
+
     public LoopDeLoopPlayer(ServerPlayerEntity player) {
         this.player = player;
     }

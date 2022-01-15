@@ -21,5 +21,6 @@
     "yellow_concrete",
     "green_concrete",
     "blue_concrete"
-  ]
+  ],
+  "statistics_bundle": "loop_de_loop_flappy"
 }

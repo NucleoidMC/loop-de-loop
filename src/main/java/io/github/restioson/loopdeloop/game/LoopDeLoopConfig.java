@@ -3,6 +3,7 @@ package io.github.restioson.loopdeloop.game;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.restioson.loopdeloop.LoopDeLoop;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.registry.Registry;
@@ -20,7 +21,8 @@ public final record LoopDeLoopConfig(
         ZVariation zVarMax,
         ZVariation zVarMin,
         boolean flappyMode,
-        List<Block> loopBlocks
+        List<Block> loopBlocks,
+        String statisticsBundle
 ) {
     public static final Codec<LoopDeLoopConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlayerConfig.CODEC.fieldOf("players").orElse(new PlayerConfig(1, 100)).forGetter(LoopDeLoopConfig::players),
@@ -32,7 +34,8 @@ public final record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            Registry.BLOCK.listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks)
+            Registry.BLOCK.listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
+            Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle)
     ).apply(instance, LoopDeLoopConfig::new));
 
     public record ZVariation(int start, int end) {

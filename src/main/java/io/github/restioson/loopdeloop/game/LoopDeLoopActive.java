@@ -2,6 +2,7 @@ package io.github.restioson.loopdeloop.game;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
@@ -27,6 +28,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -46,6 +48,7 @@ import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
 import xyz.nucleoid.plasmid.game.player.PlayerOffer;
 import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
 import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.game.stats.StatisticKeys;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.stimuli.event.item.ItemUseEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
@@ -309,7 +312,7 @@ public final class LoopDeLoopActive {
     private boolean tickPlayer(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
         int nextHoopIdx = state.lastHoop + 1;
         if (nextHoopIdx >= this.map.hoops.size()) {
-            this.onPlayerFinish(player, time);
+            this.onPlayerFinish(player, state, time);
             return true;
         }
 
@@ -332,6 +335,7 @@ public final class LoopDeLoopActive {
                 giveRocket(player, 1);
             }
 
+            state.totalHoops++;
             state.lastHoop = nextHoopIdx;
             state.previousFails = 0;
             state.lastFailOrSuccess = time;
@@ -386,14 +390,31 @@ public final class LoopDeLoopActive {
                 .collect(Collectors.toList());
     }
 
-    private void onPlayerFinish(ServerPlayerEntity player, long time) {
+    private void onPlayerFinish(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
         this.finished.add(new LoopDeLoopWinner(player.getEntityName(), time));
         this.lastCompleter = player;
 
         String ordinal = ordinal(this.finished.size());
-        player.sendMessage(new LiteralText("You finished in " + ordinal + " place!"), true);
+
+        var message = new LiteralText("You finished in ")
+                .append(new LiteralText(ordinal).formatted(Formatting.AQUA))
+                .append(" place!");
+
+        player.sendMessage(message, true);
         player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
         player.changeGameMode(GameMode.SPECTATOR);
+
+        this.publishPlayerStatistics(player, state, time);
+    }
+
+    private void publishPlayerStatistics(ServerPlayerEntity player, LoopDeLoopPlayer state, long finishTime) {
+        int playerTime = (int) (finishTime - this.startTime);
+
+        var statistics = this.gameSpace.getStatistics().bundle(this.config.statisticsBundle());
+        var playerStatistics = statistics.forPlayer(player);
+        playerStatistics.set(StatisticKeys.QUICKEST_TIME, playerTime);
+        playerStatistics.set(LoopDeLoop.TOTAL_HOOPS, state.totalHoops);
+        playerStatistics.set(LoopDeLoop.MISSED_HOOPS, state.missedHoops);
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
@@ -403,6 +424,7 @@ public final class LoopDeLoopActive {
 
         state.previousFails += 1;
         state.lastFailOrSuccess = time;
+        state.missedHoops++;
 
         if (!this.config.flappyMode()) {
             giveRocket(player, Math.min(state.previousFails, 3));
@@ -437,26 +459,25 @@ public final class LoopDeLoopActive {
     }
 
     private void broadcastWin() {
-        Text message;
+        MutableText message;
 
         if (this.finished.isEmpty()) {
             message = new LiteralText("The game ended, but nobody won!").formatted(Formatting.GOLD);
         } else {
-            StringBuilder message_builder = new StringBuilder();
-            message_builder.append("The game has ended!\n");
+            message = new LiteralText("The game has ended!\n").formatted(Formatting.GOLD);
 
             for (int i = 0; i < 5 && i < this.finished.size(); i++) {
                 LoopDeLoopWinner player = this.finished.get(i);
-                message_builder.append(String.format(
-                        "    %s place - %s in %.2fs\n",
-                        ordinal(i + 1),
-                        player.name(),
-                        (player.time() - this.startTime) / 20.0f
-                ));
-            }
 
-            String message_string = message_builder.toString();
-            message = new LiteralText(message_string).formatted(Formatting.GOLD);
+                Text ordinal = new LiteralText(ordinal(i + 1)).formatted(Formatting.AQUA);
+                Text playerName = new LiteralText(player.name()).formatted(Formatting.AQUA);
+                Text time = new LiteralText(String.format("%.2fs", (player.time() - this.startTime) / 20.0f)).formatted(Formatting.GREEN);
+
+                MutableText line = new LiteralText("   ").append(ordinal)
+                        .append(" place - ").append(playerName)
+                        .append(" in ").append(time);
+                message.append(line.append("\n"));
+            }
         }
 
         this.broadcastMessage(message);
