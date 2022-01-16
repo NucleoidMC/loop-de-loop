@@ -19,10 +19,10 @@ public final class LoopDeLoop implements ModInitializer {
             LoopDeLoopWaiting::open
     );
 
-    public static final StatisticKey<Integer> TOTAL_HOOPS = StatisticKey.intKey(new Identifier(ID, "total_hoops"), StatisticKey.StorageType.TOTAL);
-    public static final StatisticKey<Integer> MISSED_HOOPS = StatisticKey.intKey(new Identifier(ID, "missed_hoops"), StatisticKey.StorageType.TOTAL);
-    public static final StatisticKey<Integer> FIREWORKS_USED = StatisticKey.intKey(new Identifier(ID, "fireworks_used"), StatisticKey.StorageType.TOTAL);
-    public static final StatisticKey<Integer> LEAPS_USED = StatisticKey.intKey(new Identifier(ID, "leaps_used"), StatisticKey.StorageType.TOTAL);
+    public static final StatisticKey<Integer> TOTAL_HOOPS = StatisticKey.intKey(new Identifier(ID, "total_hoops"));
+    public static final StatisticKey<Integer> MISSED_HOOPS = StatisticKey.intKey(new Identifier(ID, "missed_hoops"));
+    public static final StatisticKey<Integer> FIREWORKS_USED = StatisticKey.intKey(new Identifier(ID, "fireworks_used"));
+    public static final StatisticKey<Integer> LEAPS_USED = StatisticKey.intKey(new Identifier(ID, "leaps_used"));
 
     @Override
     public void onInitialize() {

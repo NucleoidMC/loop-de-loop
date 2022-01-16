@@ -24,7 +24,7 @@ public final class LoopDeLoopGenerator {
         LoopDeLoopMap map = new LoopDeLoopMap(template);
         LoopDeLoopConfig cfg = this.config;
 
-        this.spawnPlatform(template);
+        BlockBounds spawnPlatform = this.spawnPlatform(template);
 
         BlockPos.Mutable circlePos = new BlockPos.Mutable();
         circlePos.set(0, 128, 32);
@@ -51,18 +51,17 @@ public final class LoopDeLoopGenerator {
             circlePos.setY(y);
         }
 
-        map.setSpawn(new BlockPos(0, 123, 0));
+        map.setSpawn(spawnPlatform, new BlockPos(spawnPlatform.centerTop()));
 
         return map;
     }
 
-    private void spawnPlatform(MapTemplate template) {
-        BlockPos min = new BlockPos(-5, 122, -5);
-        BlockPos max = new BlockPos(5, 122, 5);
-
-        for (BlockPos pos : BlockBounds.of(min, max)) {
+    private BlockBounds spawnPlatform(MapTemplate template) {
+        BlockBounds platform = BlockBounds.of(new BlockPos(-5, 122, -5), new BlockPos(5, 122, 5));
+        for (BlockPos pos : platform) {
             template.setBlockState(pos, Blocks.RED_TERRACOTTA.getDefaultState());
         }
+        return platform;
     }
 
     private void addCircle(MapTemplate template, int radius, BlockPos centre, LoopDeLoopMap map, BlockState outline) {

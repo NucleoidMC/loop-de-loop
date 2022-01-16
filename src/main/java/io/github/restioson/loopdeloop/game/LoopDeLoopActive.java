@@ -1,6 +1,5 @@
 package io.github.restioson.loopdeloop.game;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
@@ -18,7 +17,6 @@ import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket.Flag;
 import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -37,7 +35,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
@@ -87,6 +84,9 @@ public final class LoopDeLoopActive {
 
     // Only stores flying players, i.e non-completed players
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> playerStates;
+
+    private StartingCountdown startingCountdown;
+
     @Nullable
     private ServerPlayerEntity lastCompleter;
     private long closeTime = -1;
@@ -204,6 +204,7 @@ public final class LoopDeLoopActive {
         long time = this.world.getTime();
         this.startTime = time - (time % 20) + (4 * 20) + 19;
         this.finishTime = this.startTime + (this.config.timeLimit() * 20);
+        this.startingCountdown = new StartingCountdown(this.startTime);
 
         this.sidebar.render(this.buildLeaderboard());
     }
@@ -235,8 +236,17 @@ public final class LoopDeLoopActive {
             return;
         }
 
-        if (this.startTime > time) {
-            this.tickStartWaiting(time);
+        if (this.startingCountdown != null) {
+            if (this.startingCountdown.tick(this.playerStates.keySet()::iterator, time)) {
+                this.startingCountdown = null;
+
+                if (this.map.getSpawnPlatform() != null) {
+                    for (BlockPos pos : this.map.getSpawnPlatform()) {
+                        this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+
             return;
         }
 
@@ -247,52 +257,6 @@ public final class LoopDeLoopActive {
 
         this.timerBar.update(this.finishTime - time, this.config.timeLimit() * 20);
         this.tickPlayers(time);
-    }
-
-    private void tickStartWaiting(long time) {
-        float sec_f = (this.startTime - time) / 20.0f;
-
-        if (sec_f > 1) {
-            for (Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer> entry : this.playerStates.entrySet()) {
-                LoopDeLoopPlayer state = entry.getValue();
-                ServerPlayerEntity player = entry.getKey();
-
-                if (state.lastPos == null) {
-                    state.lastPos = player.getPos();
-                    continue;
-                }
-
-                double destX = state.lastPos.x;
-                double destY = state.lastPos.y;
-                double destZ = state.lastPos.z;
-
-                // Set X and Y as relative so it will send 0 change when we pass yaw (yaw - yaw = 0) and pitch
-                Set<Flag> flags = ImmutableSet.of(Flag.X_ROT, Flag.Y_ROT);
-
-                // Teleport without changing the pitch and yaw
-                player.networkHandler.requestTeleport(destX, destY, destZ, player.getYaw(), player.getPitch(), flags);
-            }
-        }
-
-        int sec = (int) Math.floor(sec_f) - 1;
-
-        if ((this.startTime - time) % 20 == 0) {
-            if (sec > 0) {
-                this.broadcastTitle(new LiteralText(Integer.toString(sec)).formatted(Formatting.BOLD));
-                this.broadcastSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, 1.0F);
-            } else {
-                this.broadcastTitle(new LiteralText("Go!").formatted(Formatting.BOLD));
-                this.broadcastSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, 2.0F);
-
-                // Delete spawn platform
-                BlockPos min = new BlockPos(-5, 122, -5);
-                BlockPos max = new BlockPos(5, 122, 5);
-
-                for (BlockPos pos : BlockBounds.of(min, max)) {
-                    this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
-                }
-            }
-        }
     }
 
     private void tickEndWaiting(long time) {
@@ -436,15 +400,15 @@ public final class LoopDeLoopActive {
 
         if (!this.config.flappyMode()) {
             giveRocket(player, Math.min(state.previousFails, 3));
-        }
 
-        List<FireworkRocketEntity> rockets = this.world.getEntitiesByType(
-                EntityType.FIREWORK_ROCKET,
-                player.getBoundingBox(),
-                firework -> firework.getOwner() == player
-        );
-        for (FireworkRocketEntity rocket : rockets) {
-            rocket.remove(Entity.RemovalReason.DISCARDED);
+            List<FireworkRocketEntity> rockets = this.world.getEntitiesByType(
+                    EntityType.FIREWORK_ROCKET,
+                    player.getBoundingBox(),
+                    firework -> firework.getOwner() == player
+            );
+            for (FireworkRocketEntity rocket : rockets) {
+                rocket.remove(Entity.RemovalReason.DISCARDED);
+            }
         }
 
         if (state.lastHoop == -1) {
@@ -526,10 +490,6 @@ public final class LoopDeLoopActive {
     private static void giveRocket(ServerPlayerEntity player, int n) {
         ItemStack rockets = new ItemStack(Items.FIREWORK_ROCKET, n);
         player.getInventory().insertStack(rockets);
-    }
-
-    private void broadcastTitle(Text message) {
-        this.gameSpace.getPlayers().showTitle(message, 1, 5, 3);
     }
 
     private void broadcastSound(SoundEvent sound, float pitch) {

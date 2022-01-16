@@ -3,6 +3,7 @@ package io.github.restioson.loopdeloop.game.map;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.plasmid.game.world.generator.TemplateChunkGenerator;
 
@@ -14,6 +15,7 @@ public final class LoopDeLoopMap {
 
     public final List<LoopDeLoopHoop> hoops = new ArrayList<>();
 
+    private BlockBounds spawnPlatform;
     private BlockPos spawn;
 
     public LoopDeLoopMap(MapTemplate template) {
@@ -24,8 +26,13 @@ public final class LoopDeLoopMap {
         this.hoops.add(hoop);
     }
 
-    public void setSpawn(BlockPos pos) {
+    public void setSpawn(BlockBounds platform, BlockPos pos) {
+        this.spawnPlatform = platform;
         this.spawn = pos;
+    }
+
+    public BlockBounds getSpawnPlatform() {
+        return this.spawnPlatform;
     }
 
     public BlockPos getSpawn() {
