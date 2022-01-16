@@ -2,7 +2,6 @@ package io.github.restioson.loopdeloop.game;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
@@ -134,20 +133,24 @@ public final class LoopDeLoopActive {
     private TypedActionResult<ItemStack> onUseItem(ServerPlayerEntity player, Hand hand) {
         ItemStack heldStack = player.getStackInHand(hand);
 
-        if (heldStack.getItem() == Items.FEATHER) {
-            ItemCooldownManager cooldown = player.getItemCooldownManager();
-            if (!cooldown.isCoolingDown(heldStack.getItem())) {
-                LoopDeLoopPlayer state = this.playerStates.get(player);
-                if (state != null) {
+        LoopDeLoopPlayer state = this.playerStates.get(player);
+        if (state != null) {
+            if (heldStack.getItem() == Items.FEATHER) {
+                ItemCooldownManager cooldown = player.getItemCooldownManager();
+                if (!cooldown.isCoolingDown(heldStack.getItem())) {
                     Vec3d rotationVec = player.getRotationVec(1.0F);
                     player.setVelocity(rotationVec.multiply(LEAP_VELOCITY));
                     Vec3d oldVel = player.getVelocity();
                     player.setVelocity(oldVel.x, oldVel.y + 0.5f, oldVel.z);
                     player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
 
-                    player.playSound(SoundEvents.ENTITY_HORSE_SADDLE, SoundCategory.PLAYERS,1.0F, 1.0F);
+                    player.playSound(SoundEvents.ENTITY_HORSE_SADDLE, SoundCategory.PLAYERS, 1.0F, 1.0F);
                     cooldown.set(heldStack.getItem(), LEAP_INTERVAL_TICKS);
+
+                    state.leapsUsed++;
                 }
+            } else if (heldStack.getItem() == Items.FIREWORK_ROCKET) {
+                state.fireworksUsed++;
             }
         }
 
@@ -411,10 +414,10 @@ public final class LoopDeLoopActive {
         int playerTime = (int) (finishTime - this.startTime);
 
         var statistics = this.gameSpace.getStatistics().bundle(this.config.statisticsBundle());
+
         var playerStatistics = statistics.forPlayer(player);
         playerStatistics.set(StatisticKeys.QUICKEST_TIME, playerTime);
-        playerStatistics.set(LoopDeLoop.TOTAL_HOOPS, state.totalHoops);
-        playerStatistics.set(LoopDeLoop.MISSED_HOOPS, state.missedHoops);
+        state.applyTo(playerStatistics);
     }
 
     private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
