@@ -2,6 +2,7 @@ package io.github.restioson.loopdeloop.game;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import io.github.restioson.loopdeloop.LoopDeLoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopHoop;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
@@ -19,8 +20,6 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket.Flag;
 import net.minecraft.scoreboard.AbstractTeam;
-import net.minecraft.scoreboard.ServerScoreboard;
-import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -42,6 +41,10 @@ import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.game.common.team.GameTeamConfig;
+import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
+import xyz.nucleoid.plasmid.game.common.team.TeamManager;
 import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
 import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
 import xyz.nucleoid.plasmid.game.player.PlayerOffer;
@@ -63,6 +66,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class LoopDeLoopActive {
+    private static final GameTeam TEAM = new GameTeam(
+            new GameTeamKey(LoopDeLoop.ID),
+            GameTeamConfig.builder()
+                    .setCollision(AbstractTeam.CollisionRule.NEVER)
+                    .setFriendlyFire(false)
+                    .build()
+    );
+
     private final ServerWorld world;
     private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
@@ -70,20 +81,26 @@ public final class LoopDeLoopActive {
     private final List<LoopDeLoopWinner> finished;
     private final LoopDeLoopSpawnLogic spawnLogic;
     private final LoopDeLoopTimerBar timerBar;
-    private final LoopDeLoopScoreboard scoreboard;
+    private final LoopDeLoopSideBar sidebar;
+
+    private final TeamManager teamManager;
+
     // Only stores flying players, i.e non-completed players
     private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> playerStates;
     @Nullable
     private ServerPlayerEntity lastCompleter;
-    @Nullable
-    Team team;
     private long closeTime = -1;
     private long finishTime = -1;
     private long startTime = -1;
     private static final int LEAP_INTERVAL_TICKS = 5;
     private static final double LEAP_VELOCITY = 3.0;
 
-    private LoopDeLoopActive(ServerWorld world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config, Set<ServerPlayerEntity> participants, GlobalWidgets widgets) {
+    private LoopDeLoopActive(
+            ServerWorld world, GameSpace gameSpace,
+            LoopDeLoopMap map, LoopDeLoopConfig config,
+            Set<ServerPlayerEntity> participants,
+            GlobalWidgets widgets, TeamManager teamManager
+    ) {
         this.world = world;
         this.gameSpace = gameSpace;
         this.map = map;
@@ -92,20 +109,23 @@ public final class LoopDeLoopActive {
         this.spawnLogic = new LoopDeLoopSpawnLogic(world, map);
         this.timerBar = new LoopDeLoopTimerBar(widgets);
         this.playerStates = new Object2ObjectOpenHashMap<>();
+        this.teamManager = teamManager;
 
         for (ServerPlayerEntity player : participants) {
             this.playerStates.put(player, new LoopDeLoopPlayer(player));
         }
 
-        this.scoreboard = new LoopDeLoopScoreboard(widgets, this.config.loops());
+        this.sidebar = new LoopDeLoopSideBar(widgets, this.config.loops());
     }
 
     public static void open(ServerWorld world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
         gameSpace.setActivity(activity -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(activity);
+            TeamManager teamManager = TeamManager.addTo(activity);
+            teamManager.addTeam(TEAM);
 
             Set<ServerPlayerEntity> participants = Sets.newHashSet(gameSpace.getPlayers());
-            LoopDeLoopActive active = new LoopDeLoopActive(world, gameSpace, map, config, participants, widgets);
+            LoopDeLoopActive active = new LoopDeLoopActive(world, gameSpace, map, config, participants, widgets, teamManager);
 
             activity.deny(GameRuleType.CRAFTING);
             activity.deny(GameRuleType.PORTALS);
@@ -116,7 +136,6 @@ public final class LoopDeLoopActive {
             activity.deny(GameRuleType.THROW_ITEMS);
 
             activity.listen(GameActivityEvents.ENABLE, active::onOpen);
-            activity.listen(GameActivityEvents.DISABLE, active::onClose);
 
             activity.listen(GamePlayerEvents.OFFER, active::offerPlayer);
             activity.listen(GamePlayerEvents.REMOVE, active::removePlayer);
@@ -158,20 +177,10 @@ public final class LoopDeLoopActive {
     }
 
     private void onOpen() {
-        ServerScoreboard scoreboard = this.world.getScoreboard();
-
-        Team oldTeam = scoreboard.getTeam("loopdeloop");
-        if (oldTeam != null) {
-            scoreboard.removeTeam(oldTeam);
-        }
-
-        this.team = scoreboard.addTeam("loopdeloop");
-        this.team.setCollisionRule(AbstractTeam.CollisionRule.NEVER);
         for (ServerPlayerEntity player : this.playerStates.keySet()) {
-            scoreboard.addPlayerToTeam(player.getEntityName(), this.team);
+            this.teamManager.addPlayerTo(player, TEAM.key());
 
             String[] lines;
-
             if (this.config.flappyMode()) {
                 lines = new String[] {
                         "Loop-de-loop - fly through all the hoops with your feather. Whoever does it first wins!",
@@ -196,11 +205,7 @@ public final class LoopDeLoopActive {
         this.startTime = time - (time % 20) + (4 * 20) + 19;
         this.finishTime = this.startTime + (this.config.timeLimit() * 20);
 
-        this.scoreboard.render(this.buildLeaderboard());
-    }
-
-    private void onClose() {
-        this.world.getScoreboard().removeTeam(this.team);
+        this.sidebar.render(this.buildLeaderboard());
     }
 
     private PlayerOfferResult offerPlayer(PlayerOffer offer) {
@@ -343,7 +348,7 @@ public final class LoopDeLoopActive {
             state.previousFails = 0;
             state.lastFailOrSuccess = time;
 
-            this.scoreboard.render(this.buildLeaderboard());
+            this.sidebar.render(this.buildLeaderboard());
 
             return false;
         }
@@ -483,7 +488,7 @@ public final class LoopDeLoopActive {
             }
         }
 
-        this.broadcastMessage(message);
+        this.gameSpace.getPlayers().sendMessage(message);
         this.broadcastSound(SoundEvents.ENTITY_VILLAGER_YES);
     }
 
@@ -521,13 +526,6 @@ public final class LoopDeLoopActive {
     private static void giveRocket(ServerPlayerEntity player, int n) {
         ItemStack rockets = new ItemStack(Items.FIREWORK_ROCKET, n);
         player.getInventory().insertStack(rockets);
-    }
-
-    // TODO: extract common broadcast utils into plasmid
-    private void broadcastMessage(Text message) {
-        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
-            player.sendMessage(message, false);
-        }
     }
 
     private void broadcastTitle(Text message) {

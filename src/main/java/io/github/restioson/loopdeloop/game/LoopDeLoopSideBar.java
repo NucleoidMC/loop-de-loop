@@ -8,12 +8,12 @@ import xyz.nucleoid.plasmid.game.common.widget.SidebarWidget;
 
 import java.util.List;
 
-public class LoopDeLoopScoreboard {
+public class LoopDeLoopSideBar {
 
     private final SidebarWidget sidebar;
     private final int totalHoops;
 
-    public LoopDeLoopScoreboard(GlobalWidgets widgets, int totalHoops) {
+    public LoopDeLoopSideBar(GlobalWidgets widgets, int totalHoops) {
         Text title = new LiteralText("Loop-de-loop").formatted(Formatting.BLUE, Formatting.BOLD);
         this.sidebar = widgets.addSidebar(title);
         this.totalHoops = totalHoops;
