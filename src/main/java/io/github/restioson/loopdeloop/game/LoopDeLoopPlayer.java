@@ -21,6 +21,7 @@ public class LoopDeLoopPlayer {
 
     public LoopDeLoopPlayer(ServerPlayerEntity player) {
         this.player = player;
+        this.lastPos = player.getPos();
     }
 
     public void teleport(double x, double y, double z) {
