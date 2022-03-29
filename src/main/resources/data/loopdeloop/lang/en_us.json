@@ -12,5 +12,9 @@
   "statistic.bundle.loop_de_loop_marathon": "Loop-de-Loop (Marathon)",
   "statistic.bundle.loop_de_loop_quick": "Loop-de-Loop (Quick)",
   "statistic.bundle.loop_de_loop_ridiculous": "Loop-de-Loop (Ridiculous)",
-  "statistic.bundle.loop_de_loop": "Loop-de-Loop"
+  "statistic.bundle.loop_de_loop": "Loop-de-Loop",
+  "statistic.loopdeloop.fireworks_used": "Fireworks used",
+  "statistic.loopdeloop.leaps_used": "Leaps used ",
+  "statistic.loopdeloop.missed_hoops": "Missed hoops",
+  "statistic.loopdeloop.total_hoops": "Total hoops"
 }
