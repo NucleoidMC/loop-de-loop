@@ -5,7 +5,7 @@ import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -41,10 +41,10 @@ public final class StartingCountdown {
 
         if ((this.startTime - time) % 20 == 0) {
             if (sec > 0) {
-                players.showTitle(new LiteralText(Integer.toString(sec)).formatted(Formatting.BOLD), 1, 5, 3);
+                players.showTitle(Text.literal(Integer.toString(sec)).formatted(Formatting.BOLD), 1, 5, 3);
                 players.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, SoundCategory.PLAYERS, 1.0F, 1.0F);
             } else {
-                players.showTitle(new LiteralText("Go!").formatted(Formatting.BOLD), 1, 5, 3);
+                players.showTitle(Text.literal("Go!").formatted(Formatting.BOLD), 1, 5, 3);
                 players.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP, SoundCategory.PLAYERS, 1.0F, 2.0F);
                 return true;
             }

@@ -5,7 +5,7 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -51,7 +51,7 @@ public final class LoopDeLoopSpawnLogic {
     private Vec3d generateSpawn(ServerPlayerEntity player) {
         BlockPos spawn = this.map.getSpawn();
         if (spawn == null) {
-            throw new GameOpenException(new LiteralText("Cannot spawn player! No spawn defined in map!"));
+            throw new GameOpenException(Text.literal("Cannot spawn player! No spawn defined in map!"));
         }
 
         float radius = 4.5f;

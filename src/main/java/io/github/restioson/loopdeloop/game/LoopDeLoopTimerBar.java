@@ -1,7 +1,6 @@
 package io.github.restioson.loopdeloop.game;
 
 import net.minecraft.entity.boss.BossBar;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
 import xyz.nucleoid.plasmid.game.common.widget.BossBarWidget;
@@ -10,7 +9,7 @@ public final class LoopDeLoopTimerBar {
     private final BossBarWidget bar;
 
     public LoopDeLoopTimerBar(GlobalWidgets widgets) {
-        LiteralText title = new LiteralText("Waiting for the game to start...");
+        Text title = Text.literal("Waiting for the game to start...");
         this.bar = widgets.addBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
     }
 
@@ -28,6 +27,6 @@ public final class LoopDeLoopTimerBar {
         long seconds = secondsUntilEnd % 60;
         String time = String.format("%02d:%02d left", minutes, seconds);
 
-        return new LiteralText(time);
+        return Text.literal(time);
     }
 }

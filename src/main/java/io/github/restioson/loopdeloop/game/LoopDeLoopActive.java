@@ -23,7 +23,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -33,6 +32,7 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
@@ -58,7 +58,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -194,7 +193,7 @@ public final class LoopDeLoopActive {
             }
 
             for (String line : lines) {
-                Text text = new LiteralText(line).formatted(Formatting.GOLD);
+                Text text = Text.literal(line).formatted(Formatting.GOLD);
                 player.sendMessage(text, false);
             }
 
@@ -368,8 +367,8 @@ public final class LoopDeLoopActive {
 
         String ordinal = ordinal(this.finished.size());
 
-        var message = new LiteralText("You finished in ")
-                .append(new LiteralText(ordinal).formatted(Formatting.AQUA))
+        var message = Text.literal("You finished in ")
+                .append(Text.literal(ordinal).formatted(Formatting.AQUA))
                 .append(" place!");
 
         player.sendMessage(message, true);
@@ -434,18 +433,18 @@ public final class LoopDeLoopActive {
         MutableText message;
 
         if (this.finished.isEmpty()) {
-            message = new LiteralText("The game ended, but nobody won!").formatted(Formatting.GOLD);
+            message = Text.literal("The game ended, but nobody won!").formatted(Formatting.GOLD);
         } else {
-            message = new LiteralText("The game has ended!\n").formatted(Formatting.GOLD);
+            message = Text.literal("The game has ended!\n").formatted(Formatting.GOLD);
 
             for (int i = 0; i < 5 && i < this.finished.size(); i++) {
                 LoopDeLoopWinner player = this.finished.get(i);
 
-                Text ordinal = new LiteralText(ordinal(i + 1)).formatted(Formatting.AQUA);
-                Text playerName = new LiteralText(player.name()).formatted(Formatting.AQUA);
-                Text time = new LiteralText(String.format("%.2fs", (player.time() - this.startTime) / 20.0f)).formatted(Formatting.GREEN);
+                Text ordinal = Text.literal(ordinal(i + 1)).formatted(Formatting.AQUA);
+                Text playerName = Text.literal(player.name()).formatted(Formatting.AQUA);
+                Text time = Text.literal(String.format("%.2fs", (player.time() - this.startTime) / 20.0f)).formatted(Formatting.GREEN);
 
-                MutableText line = new LiteralText("   ").append(ordinal)
+                MutableText line = Text.literal("   ").append(ordinal)
                         .append(" place - ").append(playerName)
                         .append(" in ").append(time);
                 message.append(line.append("\n"));
@@ -474,7 +473,7 @@ public final class LoopDeLoopActive {
 
         if (this.config.flappyMode()) {
             ItemStack feather = ItemStackBuilder.of(Items.FEATHER)
-                    .addLore(new LiteralText("Flap flap"))
+                    .addLore(Text.literal("Flap flap"))
                     .build();
             player.equipStack(EquipmentSlot.OFFHAND, feather);
         } else {
