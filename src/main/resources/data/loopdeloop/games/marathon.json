@@ -18,7 +18,10 @@
     "red_concrete",
     "yellow_concrete",
     "green_concrete",
-    "blue_concrete"
+    "blue_concrete",
+    "pink_concrete",
+    "purple_concrete"
   ],
+  "rocket_power": 2,
   "statistics_bundle": "loop_de_loop_marathon"
 }

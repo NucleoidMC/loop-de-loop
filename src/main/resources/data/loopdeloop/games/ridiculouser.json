@@ -1,0 +1,26 @@
+{
+  "type": "loopdeloop:loopdeloop",
+  "icon": "minecraft:elytra",
+  "description": "''I am so sorry.'' - Siuol",
+  "loops": 150,
+  "time_limit_secs": 360,
+  "start_rockets": 25,
+  "y_var_max": 80,
+  "z_var_max": {
+    "start": 48,
+    "end": 8
+  },
+  "z_var_min": {
+    "start": 36,
+    "end": 8
+  },
+  "loop_blocks": [
+    "copper_block",
+    "exposed_copper",
+    "weathered_copper",
+    "oxidized_copper"
+  ],
+  "rocket_power": 1,
+  "loop_radius": 4,
+  "statistics_bundle": "loop_de_loop_ridiculouser"
+}
