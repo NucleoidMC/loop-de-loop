@@ -6,7 +6,8 @@
   "description": "Haha elytra go brrr",
   "authors": [
     "Restioson",
-    "Gegy"
+    "Gegy",
+    "Siuolplex"
   ],
   "license": "LGPLv3",
   "environment": "*",
@@ -18,7 +19,7 @@
   "depends": {
     "fabricloader": ">=0.13",
     "fabric": "*",
-    "minecraft": "1.19",
+    "minecraft": ">=1.19",
     "plasmid": "0.5.x",
     "java": ">=17"
   }

@@ -16,8 +16,8 @@ public class LoopDeLoopPlayer {
 
     public int totalHoops;
     public int missedHoops;
-    public int fireworksUsed;
-    public int leapsUsed;
+
+    public int boostUsed;
 
     public LoopDeLoopPlayer(ServerPlayerEntity player) {
         this.player = player;
@@ -33,7 +33,7 @@ public class LoopDeLoopPlayer {
     public void applyTo(StatisticMap statistics) {
         statistics.set(LoopDeLoop.TOTAL_HOOPS, this.totalHoops);
         statistics.set(LoopDeLoop.MISSED_HOOPS, this.missedHoops);
-        statistics.set(LoopDeLoop.FIREWORKS_USED, this.fireworksUsed);
-        statistics.set(LoopDeLoop.LEAPS_USED, this.leapsUsed);
+        statistics.set(LoopDeLoop.BOOSTS_USED, this.boostUsed);
+
     }
 }
