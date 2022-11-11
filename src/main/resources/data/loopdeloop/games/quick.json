@@ -16,9 +16,8 @@
   },
   "loop_blocks": [
     "red_concrete",
-    "yellow_concrete",
-    "green_concrete",
     "blue_concrete"
   ],
+  "rocket_power": 1,
   "statistics_bundle": "loop_de_loop_quick"
 }

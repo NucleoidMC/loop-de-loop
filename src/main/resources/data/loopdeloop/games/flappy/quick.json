@@ -1,9 +1,9 @@
 {
   "type": "loopdeloop:loopdeloop",
-  "icon": "minecraft:elytra",
-  "description": "game.loopdeloop.desc",
-  "loops": 50,
-  "time_limit_secs": 120,
+  "icon": "minecraft:feather",
+  "description": "game.loopdeloop.flappy.desc",
+  "loops": 15,
+  "time_limit_secs": 45,
   "start_rockets": 3,
   "y_var_max": 28,
   "z_var_max": {
@@ -14,14 +14,14 @@
     "start": 28,
     "end": 14
   },
-
+  "loop_radius": 7,
+  "flappy_mode": true,
   "loop_blocks": [
     "red_concrete",
     "yellow_concrete",
     "green_concrete",
     "blue_concrete"
-
   ],
   "rocket_power": 1,
-  "statistics_bundle": "loop_de_loop"
+  "statistics_bundle": "loop_de_loop_flappy_quick"
 }

@@ -22,7 +22,9 @@ public final record LoopDeLoopConfig(
         ZVariation zVarMin,
         boolean flappyMode,
         List<Block> loopBlocks,
-        String statisticsBundle
+        String statisticsBundle,
+        int rocketPower,
+        boolean infiniteMode
 ) {
     public static final Codec<LoopDeLoopConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlayerConfig.CODEC.fieldOf("players").orElse(new PlayerConfig(1, 100)).forGetter(LoopDeLoopConfig::players),
@@ -35,7 +37,9 @@ public final record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
             Registry.BLOCK.getCodec().listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
-            Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle)
+            Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
+            Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
+            Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode)
     ).apply(instance, LoopDeLoopConfig::new));
 
     public record ZVariation(int start, int end) {

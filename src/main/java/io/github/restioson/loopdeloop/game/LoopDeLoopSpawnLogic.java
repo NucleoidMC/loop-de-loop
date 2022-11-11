@@ -35,7 +35,7 @@ public final class LoopDeLoopSpawnLogic {
 
         player.addStatusEffect(new StatusEffectInstance(
                 StatusEffects.NIGHT_VISION,
-                20 * 60 * 60,
+                72000,
                 1,
                 true,
                 false
@@ -54,9 +54,9 @@ public final class LoopDeLoopSpawnLogic {
             throw new GameOpenException(Text.literal("Cannot spawn player! No spawn defined in map!"));
         }
 
-        float radius = 4.5f;
+        float radius = 2.5f;
         double x = spawn.getX() + MathHelper.nextDouble(player.getRandom(), -radius, radius);
-        double z = spawn.getZ() + MathHelper.nextFloat(player.getRandom(), -radius, radius);
+        double z = spawn.getZ() + 1 + MathHelper.nextDouble(player.getRandom(), -radius, radius);
         return new Vec3d(x, spawn.getY(), z);
     }
 }
