@@ -6,12 +6,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.restioson.loopdeloop.LoopDeLoop;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registries;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 import java.util.List;
 
-public final record LoopDeLoopConfig(
+public record LoopDeLoopConfig(
         PlayerConfig players,
         int timeLimit,
         int loops,
@@ -36,7 +36,7 @@ public final record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            Registry.BLOCK.getCodec().listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
+            Registries.BLOCK.getCodec().listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
             Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
             Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
             Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode)
