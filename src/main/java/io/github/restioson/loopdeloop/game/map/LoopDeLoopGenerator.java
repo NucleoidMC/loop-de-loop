@@ -35,7 +35,7 @@ public final class LoopDeLoopGenerator {
 
         var loopBlocks = cfg.loopBlocks();
         for (int i = 0; i < cfg.loops(); i++) {
-            Block outline = loopBlocks.get(i % loopBlocks.size());
+            Block outline = loopBlocks.get(i % loopBlocks.size()).value();
             this.addCircle(template, cfg.loopRadius(), circlePos.toImmutable(), map, outline.getDefaultState());
 
             // New circle

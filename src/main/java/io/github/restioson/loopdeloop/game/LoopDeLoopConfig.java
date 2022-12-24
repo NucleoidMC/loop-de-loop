@@ -1,15 +1,14 @@
 package io.github.restioson.loopdeloop.game;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.restioson.loopdeloop.LoopDeLoop;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryCodecs;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntryList;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
-
-import java.util.List;
 
 public record LoopDeLoopConfig(
         PlayerConfig players,
@@ -21,7 +20,7 @@ public record LoopDeLoopConfig(
         ZVariation zVarMax,
         ZVariation zVarMin,
         boolean flappyMode,
-        List<Block> loopBlocks,
+        RegistryEntryList<Block> loopBlocks,
         String statisticsBundle,
         int rocketPower,
         boolean infiniteMode
@@ -36,7 +35,7 @@ public record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            Registries.BLOCK.getCodec().listOf().optionalFieldOf("loop_blocks", ImmutableList.of(Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
+            RegistryCodecs.entryList(RegistryKeys.BLOCK).optionalFieldOf("loop_blocks", RegistryEntryList.of(Block::getRegistryEntry, Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
             Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
             Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
             Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode)
