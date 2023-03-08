@@ -1,0 +1,28 @@
+{
+  "type": "loopdeloop:loopdeloop",
+  "icon": "minecraft:iron_ingot",
+  "description": "[DEBUG MODE, DO NOT ADD INTO REAL LOOP]",
+  "loops": 10000,
+  "time_limit_secs": 120,
+  "start_rockets": 3,
+  "y_var_max": 28,
+  "z_var_max": {
+    "start": 32,
+    "end": 20
+  },
+  "z_var_min": {
+    "start": 28,
+    "end": 14
+  },
+
+  "loop_blocks": [
+    "red_concrete",
+    "yellow_concrete",
+    "green_concrete",
+    "blue_concrete"
+
+  ],
+  "rocket_power": 1,
+  "debug_mode": true,
+  "statistics_bundle": "loop_de_loop_debug"
+}

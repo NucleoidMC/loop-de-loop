@@ -23,7 +23,8 @@ public record LoopDeLoopConfig(
         RegistryEntryList<Block> loopBlocks,
         String statisticsBundle,
         int rocketPower,
-        boolean infiniteMode
+        boolean infiniteMode,
+        boolean debugMode
 ) {
     public static final Codec<LoopDeLoopConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlayerConfig.CODEC.fieldOf("players").orElse(new PlayerConfig(1, 100)).forGetter(LoopDeLoopConfig::players),
@@ -38,7 +39,8 @@ public record LoopDeLoopConfig(
             RegistryCodecs.entryList(RegistryKeys.BLOCK).optionalFieldOf("loop_blocks", RegistryEntryList.of(Block::getRegistryEntry, Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
             Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
             Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
-            Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode)
+            Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode),
+            Codec.BOOL.optionalFieldOf("debug_mode", false).forGetter(LoopDeLoopConfig::debugMode)
     ).apply(instance, LoopDeLoopConfig::new));
 
     public record ZVariation(int start, int end) {

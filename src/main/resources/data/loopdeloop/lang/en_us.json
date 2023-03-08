@@ -6,5 +6,6 @@
   "game.loopdeloop.ridiculous": "Loop-de-Loop (Ridiculous)",
   "game.loopdeloop.flappy_standard": "Flappy Loop",
   "game.loopdeloop.desc": "In Loop-de-Loop, you must fly through hoops with an elytra!",
+  "game.loopdeloop.quick.desc": "Quick mode provides a more brief, easier version of Loop-De-Loop",
   "game.loopdeloop.flappy.desc": "In Flappy Loop, you must use your feather to propel yourself upwards and through the hoops!"
 }

@@ -249,9 +249,9 @@ public final class LoopDeLoopActive {
             if (this.startingCountdown.tick(this.playerStates.keySet()::iterator, time)) {
                 this.startingCountdown = null;
 
-                if (this.map.getSpawnPlatform() != null) {
+                if (this.map.getSpawnPlatform() != null && !config.debugMode()) {
                     for (BlockPos pos : this.map.getSpawnPlatform()) {
-                        this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                         this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
                     }
                 }
             }
@@ -302,7 +302,7 @@ public final class LoopDeLoopActive {
         }
 
         if (state.lastHoop != -1 && player.isOnGround()) {
-            this.failHoop(player, state, time);
+            if (!config.debugMode()) this.failHoop(player, state, time);
             return false;
         }
 
