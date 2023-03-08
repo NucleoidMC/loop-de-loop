@@ -96,6 +96,7 @@ public final class LoopDeLoopActive {
     private long closeTime = -1;
     private long finishTime = -1;
     private long startTime = -1;
+    private long fallFlyingTime = -1;
     private static final int LEAP_INTERVAL_TICKS = 5;
     private static final double LEAP_VELOCITY = 3.0;
 
@@ -211,6 +212,7 @@ public final class LoopDeLoopActive {
         long time = this.world.getTime();
         this.startTime = time - (time % 20) + (4 * 20) + 19;
         this.finishTime = this.startTime + (this.config.timeLimit() * 20L);
+        this.fallFlyingTime = this.startTime + 20L;
         this.startingCountdown = new StartingCountdown(this.startTime);
 
         this.sidebar.render(this.buildLeaderboard());
@@ -289,6 +291,10 @@ public final class LoopDeLoopActive {
     }
 
     private boolean tickPlayer(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
+        if (time < this.fallFlyingTime) {
+            player.startFallFlying();
+        }
+
         int nextHoopIdx = state.lastHoop + 1;
         if (nextHoopIdx >= this.map.hoops.size()) {
             this.onPlayerFinish(player, state, time);
