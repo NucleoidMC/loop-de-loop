@@ -50,7 +50,7 @@ public final class LoopDeLoopGenerator {
             circlePos.setY(y);
         }
 
-        map.setSpawn(spawnPlatform, new BlockPos(spawnPlatform.centerTop()));
+        map.setSpawn(spawnPlatform, BlockPos.ofFloored(spawnPlatform.centerTop()));
 
         return map;
     }
