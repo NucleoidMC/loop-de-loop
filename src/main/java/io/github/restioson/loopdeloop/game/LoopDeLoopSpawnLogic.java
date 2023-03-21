@@ -35,7 +35,7 @@ public final class LoopDeLoopSpawnLogic {
 
         player.addStatusEffect(new StatusEffectInstance(
                 StatusEffects.NIGHT_VISION,
-                72000,
+                StatusEffectInstance.INFINITE,
                 1,
                 true,
                 false

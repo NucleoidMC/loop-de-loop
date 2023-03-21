@@ -1,7 +1,7 @@
 package io.github.restioson.loopdeloop.game;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -16,8 +16,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class StartingCountdown {
-    private static final Set<PlayerPositionLookS2CPacket.Flag> TELEPORT_FLAGS = Set.of(
-            PlayerPositionLookS2CPacket.Flag.X_ROT, PlayerPositionLookS2CPacket.Flag.Y_ROT
+    private static final Set<PositionFlag> TELEPORT_FLAGS = Set.of(
+            PositionFlag.X_ROT, PositionFlag.Y_ROT
     );
 
     private final long startTime;
