@@ -20,5 +20,6 @@
     "green_concrete",
     "blue_concrete"
   ],
+  "rocket_power": 1,
   "statistics_bundle": "loop_de_loop_amplified"
 }

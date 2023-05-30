@@ -7,10 +7,9 @@ import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.random.Random;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplate;
-
-import java.util.Random;
 
 public final class LoopDeLoopGenerator {
     public final LoopDeLoopConfig config;
@@ -28,7 +27,7 @@ public final class LoopDeLoopGenerator {
 
         BlockPos.Mutable circlePos = new BlockPos.Mutable();
         circlePos.set(0, 128, 32);
-        Random random = new Random();
+        Random random = Random.createLocal();
 
         // y = mx + c  -- these are gradient values
         double mZVarMax = (cfg.zVarMax().end() - cfg.zVarMax().start()) / (double) cfg.loops();
@@ -36,7 +35,7 @@ public final class LoopDeLoopGenerator {
 
         var loopBlocks = cfg.loopBlocks();
         for (int i = 0; i < cfg.loops(); i++) {
-            Block outline = loopBlocks.get(i % loopBlocks.size());
+            Block outline = loopBlocks.get(i % loopBlocks.size()).value();
             this.addCircle(template, cfg.loopRadius(), circlePos.toImmutable(), map, outline.getDefaultState());
 
             // New circle
@@ -51,7 +50,7 @@ public final class LoopDeLoopGenerator {
             circlePos.setY(y);
         }
 
-        map.setSpawn(spawnPlatform, new BlockPos(spawnPlatform.centerTop()));
+        map.setSpawn(spawnPlatform, BlockPos.ofFloored(spawnPlatform.centerTop()));
 
         return map;
     }
