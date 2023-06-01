@@ -1,0 +1,20 @@
+{
+  "gameType.loopdeloop.loopdeloop": "Loop-de-Loop",
+  "game.loopdeloop.amplified": "Loop-de-Loop (Wzpocniony)",
+  "game.loopdeloop.marathon": "Loop-de-Loop (Maraton)",
+  "game.loopdeloop.quick": "Loop-de-Loop (Szybki)",
+  "game.loopdeloop.ridiculous": "Loop-de-Loop (Absurdalny)",
+  "game.loopdeloop.flappy_standard": "Flappy Loop",
+  "game.loopdeloop.desc": "W Loop-de-Loop, musisz przelecieć przez obręcze używając elytry!",
+  "game.loopdeloop.flappy.desc": "W Flappy Loop, musisz użyć pióra, aby wzbić się w górę i przelecieć przez obręcze!",
+  "statistic.bundle.loop_de_loop_amplified": "Loop-de-Loop (Wzpocniony)",
+  "statistic.bundle.loop_de_loop_flappy": "Loop-de-Loop (Flappy)",
+  "statistic.bundle.loop_de_loop_marathon": "Loop-de-Loop (Maraton)",
+  "statistic.bundle.loop_de_loop_quick": "Loop-de-Loop (Szybki)",
+  "statistic.bundle.loop_de_loop_ridiculous": "Loop-de-Loop (Absurdalny)",
+  "statistic.bundle.loop_de_loop": "Loop-de-Loop",
+  "statistic.loopdeloop.fireworks_used": "Użytych fajerwerków",
+  "statistic.loopdeloop.leaps_used": "Użytych wzbić",
+  "statistic.loopdeloop.missed_hoops": "Nietrafione obręcze",
+  "statistic.loopdeloop.total_hoops": "Wszystkich obręczy"
+}
