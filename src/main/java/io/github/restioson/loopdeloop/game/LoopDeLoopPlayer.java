@@ -25,7 +25,7 @@ public class LoopDeLoopPlayer {
     }
 
     public void teleport(double x, double y, double z) {
-        ServerWorld world = (ServerWorld) this.player.world;
+        ServerWorld world = this.player.getServerWorld();
         this.player.teleport(world, x, y, z, 0.0F, 0.0F);
         this.lastPos = new Vec3d(x, y, z);
     }
