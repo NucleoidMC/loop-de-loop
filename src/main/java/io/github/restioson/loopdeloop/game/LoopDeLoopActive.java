@@ -169,7 +169,7 @@ public final class LoopDeLoopActive {
                     player.setVelocity(oldVel.x, oldVel.y + 0.5f, oldVel.z);
                     player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
 
-                    player.playSoundToPlayer(SoundEvents.ENTITY_HORSE_SADDLE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                    player.playSoundToPlayer(SoundEvents.ENTITY_HORSE_SADDLE.value(), SoundCategory.PLAYERS, 1.0F, 1.0F);
                     cooldown.set(heldStack, LEAP_INTERVAL_TICKS);
 
                     state.boostUsed++;
