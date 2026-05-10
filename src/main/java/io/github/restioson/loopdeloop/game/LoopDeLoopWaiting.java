@@ -2,12 +2,11 @@ package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopGenerator;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.world.GameMode;
-import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.level.GameType;
+import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenProcedure;
 import xyz.nucleoid.plasmid.api.game.GameResult;
@@ -22,14 +21,14 @@ import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public final class LoopDeLoopWaiting {
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
     private final LoopDeLoopConfig config;
 
     private final LoopDeLoopSpawnLogic spawnLogic;
 
-    private LoopDeLoopWaiting(ServerWorld world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
+    private LoopDeLoopWaiting(ServerLevel world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
         this.world = world;
         this.gameSpace = gameSpace;
         this.map = map;
@@ -43,10 +42,10 @@ public final class LoopDeLoopWaiting {
         var generator = new LoopDeLoopGenerator(config);
 
         var map = generator.build();
-        var worldConfig = new RuntimeWorldConfig()
+        var worldConfig = new RuntimeLevelConfig()
                 .setGenerator(map.asGenerator(context.server()));
 
-        return context.openWithWorld(worldConfig, (activity, world) -> {
+        return context.openWithLevel(worldConfig, (activity, world) -> {
             LoopDeLoopWaiting waiting = new LoopDeLoopWaiting(world, activity.getGameSpace(), map, config);
 
             GameWaitingLobby.addTo(activity, config.players());
@@ -66,16 +65,16 @@ public final class LoopDeLoopWaiting {
     }
 
     private JoinAcceptorResult acceptPlayer(JoinAcceptor offer) {
-        return this.spawnLogic.acceptPlayer(offer, GameMode.ADVENTURE);
+        return this.spawnLogic.acceptPlayer(offer, GameType.ADVENTURE);
     }
 
-    private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+    private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
         this.spawnPlayer(player);
         return EventResult.DENY;
     }
 
-    private void spawnPlayer(ServerPlayerEntity player) {
-        this.spawnLogic.resetPlayer(player, GameMode.ADVENTURE);
+    private void spawnPlayer(ServerPlayer player) {
+        this.spawnLogic.resetPlayer(player, GameType.ADVENTURE);
         this.spawnLogic.spawnPlayer(player);
     }
 }

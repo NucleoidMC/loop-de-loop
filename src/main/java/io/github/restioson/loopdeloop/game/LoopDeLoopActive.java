@@ -7,36 +7,6 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.block.Blocks;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FireworkExplosionComponent;
-import net.minecraft.component.type.FireworksComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.ItemCooldownManager;
-import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
-import net.minecraft.scoreboard.AbstractTeam;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
@@ -53,6 +23,7 @@ import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
 import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
 import xyz.nucleoid.plasmid.api.game.stats.StatisticKeys;
 import xyz.nucleoid.plasmid.api.util.ItemStackBuilder;
+import xyz.nucleoid.plasmid.api.util.PlayerUtil;
 import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.item.ItemUseEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
@@ -65,17 +36,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.item.ItemCooldowns;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.Fireworks;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Team;
 
 public final class LoopDeLoopActive {
     private static final GameTeam TEAM = new GameTeam(
             new GameTeamKey(LoopDeLoop.ID),
             GameTeamConfig.builder()
-                    .setCollision(AbstractTeam.CollisionRule.NEVER)
+                    .setCollision(Team.CollisionRule.NEVER)
                     .setFriendlyFire(false)
                     .build()
     );
 
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final GameSpace gameSpace;
     private final LoopDeLoopMap map;
     private final LoopDeLoopConfig config;
@@ -87,12 +86,12 @@ public final class LoopDeLoopActive {
     private final TeamManager teamManager;
 
     // Only stores flying players, i.e non-completed players
-    private final Object2ObjectMap<ServerPlayerEntity, LoopDeLoopPlayer> playerStates;
+    private final Object2ObjectMap<ServerPlayer, LoopDeLoopPlayer> playerStates;
 
     private StartingCountdown startingCountdown;
 
     @Nullable
-    private ServerPlayerEntity lastCompleter;
+    private ServerPlayer lastCompleter;
     private long closeTime = -1;
     private long finishTime = -1;
     private long startTime = -1;
@@ -101,9 +100,9 @@ public final class LoopDeLoopActive {
     private static final double LEAP_VELOCITY = 3.0;
 
     private LoopDeLoopActive(
-            ServerWorld world, GameSpace gameSpace,
+            ServerLevel world, GameSpace gameSpace,
             LoopDeLoopMap map, LoopDeLoopConfig config,
-            Set<ServerPlayerEntity> participants,
+            Set<ServerPlayer> participants,
             GlobalWidgets widgets, TeamManager teamManager
     ) {
         this.world = world;
@@ -116,20 +115,20 @@ public final class LoopDeLoopActive {
         this.playerStates = new Object2ObjectOpenHashMap<>();
         this.teamManager = teamManager;
 
-        for (ServerPlayerEntity player : participants) {
+        for (ServerPlayer player : participants) {
             this.playerStates.put(player, new LoopDeLoopPlayer(player));
         }
 
         this.sidebar = new LoopDeLoopSideBar(widgets, this.config.loops());
     }
 
-    public static void open(ServerWorld world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
+    public static void open(ServerLevel world, GameSpace gameSpace, LoopDeLoopMap map, LoopDeLoopConfig config) {
         gameSpace.setActivity(activity -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(activity);
             TeamManager teamManager = TeamManager.addTo(activity);
             teamManager.addTeam(TEAM);
 
-            Set<ServerPlayerEntity> participants = Sets.newHashSet(gameSpace.getPlayers());
+            Set<ServerPlayer> participants = Sets.newHashSet(gameSpace.getPlayers());
             LoopDeLoopActive active = new LoopDeLoopActive(world, gameSpace, map, config, participants, widgets, teamManager);
 
             activity.deny(GameRuleType.CRAFTING);
@@ -155,39 +154,39 @@ public final class LoopDeLoopActive {
         });
     }
 
-    private ActionResult onUseItem(ServerPlayerEntity player, Hand hand) {
-        ItemStack heldStack = player.getStackInHand(hand);
+    private InteractionResult onUseItem(ServerPlayer player, InteractionHand hand) {
+        ItemStack heldStack = player.getItemInHand(hand);
 
         LoopDeLoopPlayer state = this.playerStates.get(player);
         if (state != null) {
             if (heldStack.getItem() == Items.FEATHER) {
-                ItemCooldownManager cooldown = player.getItemCooldownManager();
-                if (!cooldown.isCoolingDown(heldStack)) {
-                    Vec3d rotationVec = player.getRotationVec(1.0F);
-                    player.setVelocity(rotationVec.multiply(LEAP_VELOCITY));
-                    Vec3d oldVel = player.getVelocity();
-                    player.setVelocity(oldVel.x, oldVel.y + 0.5f, oldVel.z);
-                    player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
+                ItemCooldowns cooldown = player.getCooldowns();
+                if (!cooldown.isOnCooldown(heldStack)) {
+                    Vec3 rotationVec = player.getViewVector(1.0F);
+                    player.setDeltaMovement(rotationVec.scale(LEAP_VELOCITY));
+                    Vec3 oldVel = player.getDeltaMovement();
+                    player.setDeltaMovement(oldVel.x, oldVel.y + 0.5f, oldVel.z);
+                    player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
-                    player.playSoundToPlayer(SoundEvents.ENTITY_HORSE_SADDLE.value(), SoundCategory.PLAYERS, 1.0F, 1.0F);
-                    cooldown.set(heldStack, LEAP_INTERVAL_TICKS);
+                    PlayerUtil.playSoundToPlayer(player, SoundEvents.HORSE_SADDLE.value(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                    cooldown.addCooldown(heldStack, LEAP_INTERVAL_TICKS);
 
                     state.boostUsed++;
-                    return ActionResult.SUCCESS_SERVER;
+                    return InteractionResult.SUCCESS_SERVER;
                 }
             } else if (heldStack.getItem() == Items.FIREWORK_ROCKET) {
-                ItemCooldownManager cooldown = player.getItemCooldownManager();
-                if (!cooldown.isCoolingDown(heldStack)) {
+                ItemCooldowns cooldown = player.getCooldowns();
+                if (!cooldown.isOnCooldown(heldStack)) {
                     state.boostUsed++;
                 }
             }
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     private void onOpen() {
-        for (ServerPlayerEntity player : this.playerStates.keySet()) {
+        for (ServerPlayer player : this.playerStates.keySet()) {
             this.teamManager.addPlayerTo(player, TEAM.key());
 
             String[] lines;
@@ -204,14 +203,14 @@ public final class LoopDeLoopActive {
             }
 
             for (String line : lines) {
-                Text text = Text.literal(line).formatted(Formatting.GOLD);
-                player.sendMessage(text, false);
+                Component text = Component.literal(line).withStyle(ChatFormatting.GOLD);
+                player.sendSystemMessage(text, false);
             }
 
             this.spawnParticipant(player);
         }
 
-        long time = this.world.getTime();
+        long time = this.world.getGameTime();
         this.startTime = time - (time % 20) + (4 * 20) + 19;
         this.finishTime = this.startTime + (this.config.timeLimit() * 20L);
         this.fallFlyingTime = this.startTime + 20L;
@@ -221,10 +220,10 @@ public final class LoopDeLoopActive {
     }
 
     private JoinAcceptorResult acceptPlayer(JoinAcceptor offer) {
-        return this.spawnLogic.acceptPlayer(offer, GameMode.SPECTATOR);
+        return this.spawnLogic.acceptPlayer(offer, GameType.SPECTATOR);
     }
 
-    private void removePlayer(ServerPlayerEntity player) {
+    private void removePlayer(ServerPlayer player) {
         this.playerStates.remove(player);
     }
 
@@ -238,7 +237,7 @@ public final class LoopDeLoopActive {
     }
 
     private void tick() {
-        long time = this.world.getTime();
+        long time = this.world.getGameTime();
 
         if (this.closeTime > 0) {
             if (time >= this.closeTime) {
@@ -253,7 +252,7 @@ public final class LoopDeLoopActive {
 
                 if (this.map.getSpawnPlatform() != null && !config.debugMode()) {
                     for (BlockPos pos : this.map.getSpawnPlatform()) {
-                         this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                         this.world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
                     }
                 }
             }
@@ -271,8 +270,8 @@ public final class LoopDeLoopActive {
     }
 
     private void tickEndWaiting(long time) {
-        for (ServerPlayerEntity player : this.playerStates.keySet()) {
-            player.changeGameMode(GameMode.SPECTATOR);
+        for (ServerPlayer player : this.playerStates.keySet()) {
+            player.setGameMode(GameType.SPECTATOR);
         }
 
         this.closeTime = time + (5 * 20);
@@ -280,11 +279,11 @@ public final class LoopDeLoopActive {
     }
 
     private void tickPlayers(long time) {
-        Iterator<Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer>> iterator = this.playerStates.entrySet().iterator();
+        Iterator<Map.Entry<ServerPlayer, LoopDeLoopPlayer>> iterator = this.playerStates.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<ServerPlayerEntity, LoopDeLoopPlayer> entry = iterator.next();
+            Map.Entry<ServerPlayer, LoopDeLoopPlayer> entry = iterator.next();
             LoopDeLoopPlayer state = entry.getValue();
-            ServerPlayerEntity player = entry.getKey();
+            ServerPlayer player = entry.getKey();
 
             if (this.tickPlayer(player, state, time)) {
                 iterator.remove();
@@ -292,9 +291,9 @@ public final class LoopDeLoopActive {
         }
     }
 
-    private boolean tickPlayer(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
+    private boolean tickPlayer(ServerPlayer player, LoopDeLoopPlayer state, long time) {
         if (time < this.fallFlyingTime) {
-            player.startGliding();
+            player.startFallFlying();
         }
 
         int nextHoopIdx = state.lastHoop + 1;
@@ -303,20 +302,20 @@ public final class LoopDeLoopActive {
             return true;
         }
 
-        if (state.lastHoop != -1 && player.isOnGround()) {
+        if (state.lastHoop != -1 && player.onGround()) {
             if (!config.debugMode()) this.failHoop(player, state, time);
             return false;
         }
 
         LoopDeLoopHoop nextHoop = this.map.hoops.get(nextHoopIdx);
 
-        Vec3d lastPos = state.lastPos;
-        Vec3d currentPos = player.getPos();
+        Vec3 lastPos = state.lastPos;
+        Vec3 currentPos = player.position();
 
         state.lastPos = currentPos;
 
         if (nextHoop.intersectsSegment(lastPos, currentPos)) {
-            player.playSoundToPlayer(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
+            PlayerUtil.playSoundToPlayer(player, SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);
 
             if (!this.config.flappyMode()) {
                 giveRocket(player, 1, this.config.rocketPower());
@@ -340,7 +339,7 @@ public final class LoopDeLoopActive {
         return false;
     }
 
-    private boolean testFailure(ServerPlayerEntity player, LoopDeLoopPlayer state, LoopDeLoopHoop nextHoop) {
+    private boolean testFailure(ServerPlayer player, LoopDeLoopPlayer state, LoopDeLoopHoop nextHoop) {
         // player has traveled past the next hoop
         if (Math.floor(player.getZ()) > nextHoop.centre.getZ() + 1) {
             return true;
@@ -377,25 +376,25 @@ public final class LoopDeLoopActive {
                 .collect(Collectors.toList());
     }
 
-    private void onPlayerFinish(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
-        this.finished.add(new LoopDeLoopWinner(player.getNameForScoreboard(), time));
+    private void onPlayerFinish(ServerPlayer player, LoopDeLoopPlayer state, long time) {
+        this.finished.add(new LoopDeLoopWinner(player.getScoreboardName(), time));
         this.lastCompleter = player;
         boolean isFirst = false;
 
         String ordinal = ordinal(this.finished.size());
 
-        var message = Text.literal("You finished in ")
-                .append(Text.literal(ordinal).formatted(Formatting.AQUA))
+        var message = Component.literal("You finished in ")
+                .append(Component.literal(ordinal).withStyle(ChatFormatting.AQUA))
                 .append(" place!");
 
-        player.sendMessage(message, true);
-        player.playSoundToPlayer(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
-        player.changeGameMode(GameMode.SPECTATOR);
+        player.sendSystemMessage(message, true);
+        PlayerUtil.playSoundToPlayer(player, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
+        player.setGameMode(GameType.SPECTATOR);
         if (this.finished.size() == 1 && (long) playerStates.entrySet().size() > 1) isFirst = true;
         this.publishPlayerStatistics(player, state, time, isFirst);
     }
 
-    private void publishPlayerStatistics(ServerPlayerEntity player, LoopDeLoopPlayer state, long finishTime, boolean isFirst) {
+    private void publishPlayerStatistics(ServerPlayer player, LoopDeLoopPlayer state, long finishTime, boolean isFirst) {
         int playerTime = (int) (finishTime - this.startTime);
 
         var statistics = this.gameSpace.getStatistics().bundle(this.config.statisticsBundle());
@@ -406,7 +405,7 @@ public final class LoopDeLoopActive {
         state.applyTo(playerStatistics);
     }
 
-    private void failHoop(ServerPlayerEntity player, LoopDeLoopPlayer state, long time) {
+    private void failHoop(ServerPlayer player, LoopDeLoopPlayer state, long time) {
         if (time - state.lastFailOrSuccess < 10) {
             return;
         }
@@ -418,7 +417,7 @@ public final class LoopDeLoopActive {
         if (!this.config.flappyMode()) {
             giveRocket(player, Math.min(state.previousFails, 3), this.config.rocketPower());
 
-            List<FireworkRocketEntity> rockets = this.world.getEntitiesByType(
+            List<FireworkRocketEntity> rockets = this.world.getEntities(
                     EntityType.FIREWORK_ROCKET,
                     player.getBoundingBox(),
                     firework -> firework.getOwner() == player
@@ -432,37 +431,37 @@ public final class LoopDeLoopActive {
             this.spawnLogic.spawnPlayer(player);
         } else {
             LoopDeLoopHoop lastHoop = this.map.hoops.get(state.lastHoop);
-            Vec3d centre = Vec3d.ofCenter(lastHoop.centre);
+            Vec3 centre = Vec3.atCenterOf(lastHoop.centre);
 
-            Random random = player.getRandom();
+            RandomSource random = player.getRandom();
             float radius = 2;
 
             state.teleport(
-                    centre.x + MathHelper.nextDouble(random, -radius, radius),
-                    centre.y + MathHelper.nextDouble(random, -radius, radius),
+                    centre.x + Mth.nextDouble(random, -radius, radius),
+                    centre.y + Mth.nextDouble(random, -radius, radius),
                     centre.z + 2
             );
         }
 
-        player.playSoundToPlayer(SoundEvents.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        PlayerUtil.playSoundToPlayer(player, SoundEvents.VILLAGER_NO, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     private void broadcastWin() {
-        MutableText message;
+        MutableComponent message;
 
         if (this.finished.isEmpty()) {
-            message = Text.literal("The game ended, but nobody won!").formatted(Formatting.GOLD);
+            message = Component.literal("The game ended, but nobody won!").withStyle(ChatFormatting.GOLD);
         } else {
-            message = Text.literal("The game has ended!\n").formatted(Formatting.GOLD);
+            message = Component.literal("The game has ended!\n").withStyle(ChatFormatting.GOLD);
 
             for (int i = 0; i < 5 && i < this.finished.size(); i++) {
                 LoopDeLoopWinner player = this.finished.get(i);
 
-                Text ordinal = Text.literal(ordinal(i + 1)).formatted(Formatting.AQUA);
-                Text playerName = Text.literal(player.name()).formatted(Formatting.AQUA);
-                Text time = Text.literal(String.format("%.2fs", (player.time() - this.startTime) / 20.0f)).formatted(Formatting.GREEN);
+                Component ordinal = Component.literal(ordinal(i + 1)).withStyle(ChatFormatting.AQUA);
+                Component playerName = Component.literal(player.name()).withStyle(ChatFormatting.AQUA);
+                Component time = Component.literal(String.format("%.2fs", (player.time() - this.startTime) / 20.0f)).withStyle(ChatFormatting.GREEN);
 
-                MutableText line = Text.literal("   ").append(ordinal)
+                MutableComponent line = Component.literal("   ").append(ordinal)
                         .append(" place - ").append(playerName)
                         .append(" in ").append(time);
                 message.append(line.append("\n"));
@@ -470,52 +469,52 @@ public final class LoopDeLoopActive {
         }
 
         this.gameSpace.getPlayers().sendMessage(message);
-        this.broadcastSound(SoundEvents.ENTITY_VILLAGER_YES);
+        this.broadcastSound(SoundEvents.VILLAGER_YES);
     }
 
-    private EventResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-        long time = this.world.getTime();
+    private EventResult onPlayerDamage(ServerPlayer player, DamageSource source, float amount) {
+        long time = this.world.getGameTime();
         this.failHoop(player, this.playerStates.get(player), time);
         return EventResult.DENY;
     }
 
-    private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-        long time = this.world.getTime();
+    private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
+        long time = this.world.getGameTime();
         this.failHoop(player, this.playerStates.get(player), time);
         return EventResult.DENY;
     }
 
-    private void spawnParticipant(ServerPlayerEntity player) {
-        this.spawnLogic.resetPlayer(player, GameMode.ADVENTURE);
+    private void spawnParticipant(ServerPlayer player) {
+        this.spawnLogic.resetPlayer(player, GameType.ADVENTURE);
         this.spawnLogic.spawnPlayer(player);
 
         if (this.config.flappyMode()) {
             ItemStack feather = ItemStackBuilder.of(Items.FEATHER)
-                    .addLore(Text.literal("Flap flap"))
+                    .addLore(Component.literal("Flap flap"))
                     .build();
-            player.equipStack(EquipmentSlot.OFFHAND, feather);
+            player.setItemSlot(EquipmentSlot.OFFHAND, feather);
         } else {
             ItemStack elytra = ItemStackBuilder.of(Items.ELYTRA)
                     .setUnbreakable()
                     .build();
-            player.equipStack(EquipmentSlot.CHEST, elytra);
+            player.setItemSlot(EquipmentSlot.CHEST, elytra);
 
             giveRocket(player, this.config.startRockets(), this.config.rocketPower());
         }
     }
 
-    private static void giveRocket(ServerPlayerEntity player, int n, int flightPower) {
+    private static void giveRocket(ServerPlayer player, int n, int flightPower) {
         ItemStack rockets = new ItemStack(Items.FIREWORK_ROCKET, n);
-        rockets.set(DataComponentTypes.FIREWORKS, new FireworksComponent(flightPower, List.of()));
-        player.getInventory().insertStack(rockets);
+        rockets.set(DataComponents.FIREWORKS, new Fireworks(flightPower, List.of()));
+        player.getInventory().add(rockets);
     }
 
     private void broadcastSound(SoundEvent sound, float pitch) {
-        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+        for (ServerPlayer player : this.gameSpace.getPlayers()) {
             if (player.equals(this.lastCompleter)) {
                 continue;
             }
-            player.playSoundToPlayer(sound, SoundCategory.PLAYERS, 1.0F, pitch);
+            PlayerUtil.playSoundToPlayer(player, sound, SoundSource.PLAYERS, 1.0F, pitch);
         }
     }
 

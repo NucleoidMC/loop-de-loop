@@ -1,18 +1,18 @@
 package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.LoopDeLoop;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.api.game.stats.StatisticMap;
 
 import java.util.Set;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 public class LoopDeLoopPlayer {
-    public final ServerPlayerEntity player;
+    public final ServerPlayer player;
 
     public int lastHoop = -1;
-    public Vec3d lastPos;
+    public Vec3 lastPos;
     public long lastFailOrSuccess = -1;
     public int previousFails = -1;
 
@@ -21,15 +21,15 @@ public class LoopDeLoopPlayer {
 
     public int boostUsed;
 
-    public LoopDeLoopPlayer(ServerPlayerEntity player) {
+    public LoopDeLoopPlayer(ServerPlayer player) {
         this.player = player;
-        this.lastPos = player.getPos();
+        this.lastPos = player.position();
     }
 
     public void teleport(double x, double y, double z) {
-        ServerWorld world = this.player.getServerWorld();
-        this.player.teleport(world, x, y, z, Set.of(), 0.0F, 0.0F, false);
-        this.lastPos = new Vec3d(x, y, z);
+        ServerLevel world = this.player.level();
+        this.player.teleportTo(world, x, y, z, Set.of(), 0.0F, 0.0F, false);
+        this.lastPos = new Vec3(x, y, z);
     }
 
     public void applyTo(StatisticMap statistics) {

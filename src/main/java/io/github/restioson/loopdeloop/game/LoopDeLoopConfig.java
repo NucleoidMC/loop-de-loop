@@ -4,11 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.restioson.loopdeloop.LoopDeLoop;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryCodecs;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntryList;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryCodecs;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 
 public record LoopDeLoopConfig(
@@ -21,7 +21,7 @@ public record LoopDeLoopConfig(
         ZVariation zVarMax,
         ZVariation zVarMin,
         boolean flappyMode,
-        RegistryEntryList<Block> loopBlocks,
+        HolderSet<Block> loopBlocks,
         String statisticsBundle,
         int rocketPower,
         boolean infiniteMode,
@@ -37,7 +37,7 @@ public record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            RegistryCodecs.entryList(RegistryKeys.BLOCK).optionalFieldOf("loop_blocks", RegistryEntryList.of(Block::getRegistryEntry, Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
+            RegistryCodecs.homogeneousList(Registries.BLOCK).optionalFieldOf("loop_blocks", HolderSet.direct(Block::builtInRegistryHolder, Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
             Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
             Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
             Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode),

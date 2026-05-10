@@ -1,64 +1,64 @@
 package io.github.restioson.loopdeloop.game;
 
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
 
 import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 
 public final class LoopDeLoopSpawnLogic {
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final LoopDeLoopMap map;
 
-    public LoopDeLoopSpawnLogic(ServerWorld world, LoopDeLoopMap map) {
+    public LoopDeLoopSpawnLogic(ServerLevel world, LoopDeLoopMap map) {
         this.world = world;
         this.map = map;
     }
 
-    public JoinAcceptorResult acceptPlayer(JoinAcceptor offer, GameMode gameMode) {
+    public JoinAcceptorResult acceptPlayer(JoinAcceptor offer, GameType gameMode) {
         return offer.teleport(this.world, this.generateSpawn(this.world.getRandom()))
                 .thenRunForEach(player -> this.resetPlayer(player, gameMode));
     }
 
-    public void resetPlayer(ServerPlayerEntity player, GameMode gameMode) {
-        player.changeGameMode(gameMode);
+    public void resetPlayer(ServerPlayer player, GameType gameMode) {
+        player.setGameMode(gameMode);
 
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.NIGHT_VISION,
-                StatusEffectInstance.INFINITE,
+        player.addEffect(new MobEffectInstance(
+                MobEffects.NIGHT_VISION,
+                MobEffectInstance.INFINITE_DURATION,
                 1,
                 true,
                 false
         ));
     }
 
-    public void spawnPlayer(ServerPlayerEntity player) {
+    public void spawnPlayer(ServerPlayer player) {
         var spawn = this.generateSpawn(player.getRandom());
 
-        player.teleport(this.world, spawn.x, spawn.y, spawn.z, Set.of(), 0.0F, 0.0F, false);
+        player.teleportTo(this.world, spawn.x, spawn.y, spawn.z, Set.of(), 0.0F, 0.0F, false);
     }
 
-    private Vec3d generateSpawn(Random random) {
+    private Vec3 generateSpawn(RandomSource random) {
         BlockPos spawn = this.map.getSpawn();
         if (spawn == null) {
-            throw new GameOpenException(Text.literal("Cannot spawn player! No spawn defined in map!"));
+            throw new GameOpenException(Component.literal("Cannot spawn player! No spawn defined in map!"));
         }
 
         float radius = 2.5f;
-        double x = spawn.getX() + MathHelper.nextDouble(random, -radius, radius);
-        double z = spawn.getZ() + 1 + MathHelper.nextDouble(random, -radius, radius);
-        return new Vec3d(x, spawn.getY(), z);
+        double x = spawn.getX() + Mth.nextDouble(random, -radius, radius);
+        double z = spawn.getZ() + 1 + Mth.nextDouble(random, -radius, radius);
+        return new Vec3(x, spawn.getY(), z);
     }
 }
