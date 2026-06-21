@@ -37,7 +37,7 @@ public record LoopDeLoopConfig(
             ZVariation.CODEC.fieldOf("z_var_max").forGetter(LoopDeLoopConfig::zVarMax),
             ZVariation.CODEC.fieldOf("z_var_min").forGetter(LoopDeLoopConfig::zVarMin),
             Codec.BOOL.fieldOf("flappy_mode").orElse(false).forGetter(LoopDeLoopConfig::flappyMode),
-            RegistryCodecs.homogeneousList(Registries.BLOCK).optionalFieldOf("loop_blocks", HolderSet.direct(Block::builtInRegistryHolder, Blocks.BLUE_TERRACOTTA)).forGetter(LoopDeLoopConfig::loopBlocks),
+            RegistryCodecs.homogeneousList(Registries.BLOCK).optionalFieldOf("loop_blocks", HolderSet.direct(Block::builtInRegistryHolder, Blocks.DYED_TERRACOTTA.blue())).forGetter(LoopDeLoopConfig::loopBlocks),
             Codec.STRING.optionalFieldOf("statistics_bundle", LoopDeLoop.ID).forGetter(LoopDeLoopConfig::statisticsBundle),
             Codec.INT.optionalFieldOf("rocketPower", 1).forGetter(LoopDeLoopConfig::rocketPower),
             Codec.BOOL.optionalFieldOf("infinite_mode", false).forGetter(LoopDeLoopConfig::infiniteMode),

@@ -7,6 +7,7 @@ import io.github.restioson.loopdeloop.game.map.LoopDeLoopMap;
 import io.github.restioson.loopdeloop.game.map.LoopDeLoopWinner;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.world.entity.EntityTypes;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
@@ -418,7 +419,7 @@ public final class LoopDeLoopActive {
             giveRocket(player, Math.min(state.previousFails, 3), this.config.rocketPower());
 
             List<FireworkRocketEntity> rockets = this.world.getEntities(
-                    EntityType.FIREWORK_ROCKET,
+                    EntityTypes.FIREWORK_ROCKET,
                     player.getBoundingBox(),
                     firework -> firework.getOwner() == player
             );

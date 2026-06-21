@@ -58,7 +58,7 @@ public final class LoopDeLoopGenerator {
     private BlockBounds spawnPlatform(MapTemplate template) {
         BlockBounds platform = BlockBounds.of(new BlockPos(-5, 122, -5), new BlockPos(5, 122, 5));
         for (BlockPos pos : platform) {
-            template.setBlockState(pos, Blocks.RED_TERRACOTTA.defaultBlockState());
+            template.setBlockState(pos, Blocks.DYED_TERRACOTTA.red().defaultBlockState());
         }
         return platform;
     }
